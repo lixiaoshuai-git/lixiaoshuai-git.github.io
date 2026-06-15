@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识图谱浏览器</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6fa;color:#333}
+#toolbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:#fff;border-bottom:1px solid #e8e8e8;box-shadow:0 1px 4px rgba(0,0,0,.06);z-index:100;position:relative}
+#brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand-icon{font-size:22px;color:#5470c6}
+.brand-text{font-size:16px;font-weight:700;color:#333}
+#search-box{display:flex;align-items:center;flex:1;max-width:520px;min-width:200px}
+#search-input{flex:1;height:36px;padding:0 14px;border:1px solid #d9d9d9;border-right:none;border-radius:6px 0 0 6px;font-size:14px;outline:none;transition:border-color .2s}
+#search-input:focus{border-color:#5470c6;box-shadow:0 0 0 2px rgba(84,112,198,.15)}
+#search-btn{height:36px;padding:0 20px;border:none;border-radius:0 6px 6px 0;background:#5470c6;color:#fff;font-size:14px;cursor:pointer;transition:background .2s}
+#search-btn:hover{background:#4360b5}
+#search-btn:disabled{background:#a0aec0;cursor:not-allowed}
+#toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+#toolbar-actions button{height:32px;padding:0 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:13px;color:#555;cursor:pointer;transition:all .2s}
+#toolbar-actions button:hover{border-color:#5470c6;color:#5470c6;background:#f0f5ff}
+.badge{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#f0f5ff;color:#5470c6;white-space:nowrap}
+#kg-container{position:absolute;top:60px;left:0;right:0;bottom:28px;background:linear-gradient(135deg,#fafbfd 0%,#f0f2f8 100%);overflow:hidden}
+#status-message{display:none;position:absolute;top:70px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:6px;font-size:14px;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.1);pointer-events:none}
+.status-info{display:block!important;background:#e6f7ff;border:1px solid #91d5ff;color:#0050b3}
+.status-success{display:block!important;background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+.status-error{display:block!important;background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+.node-group circle{transition:stroke-width .15s}
+.node-group:hover circle{stroke-width:3.5px;filter:brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,.2))}
+.node-glow{animation:pulse 2s ease-in-out infinite}@keyframes pulse{0%,100%{stroke-opacity:.3}50%{stroke-opacity:.6}}
+.node-label{pointer-events:none;text-shadow:0 1px 2px rgba(255,255,255,.9);font-size:11px}
+.link{transition:stroke .2s}
+.link-group:hover .link{stroke:#5470c6;stroke-width:2.5px}
+.link-label{pointer-events:none;text-shadow:0 1px 1px rgba(255,255,255,.8);font-size:10px;fill:#888}
+#node-tooltip{display:none;position:absolute;padding:8px 14px;background:rgba(255,255,255,.95);border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;pointer-events:none;white-space:nowrap}
+#legend-panel{position:absolute;right:16px;top:80px;padding:12px 16px;background:rgba(255,255,255,.92);border:1px solid #e8e8e8;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);z-index:50}
+.legend-title{font-size:12px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:1px}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:#666}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+#footer-bar{position:absolute;bottom:0;left:0;right:0;height:28px;display:flex;align-items:center;gap:20px;padding:0 20px;background:#fff;border-top:1px solid #e8e8e8;font-size:11px;color:#999;z-index:100}
+#footer-hint{margin-left:auto;color:#bbb}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div id="brand"><span class="brand-icon">◆</span><span class="brand-text">知识图谱浏览器</span></div>
+  <div id="search-box">
+    <input type="text" id="search-input" placeholder="输入实体名称探索知识图谱" autocomplete="off">
+    <button id="search-btn" title="搜索">搜索</button>
+  </div>
+  <div id="toolbar-actions">
+    <button id="btn-reset">重置</button>
+    <button id="btn-fit">适应</button>
+    <span id="node-count" class="badge">节点: 0</span>
+    <span id="link-count" class="badge">边: 0</span>
+  </div>
+</div>
+
+<div id="kg-container"></div>
+<div id="status-message"></div>
+
+<div id="legend-panel">
+  <div class="legend-title">图例</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span> 根节点</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#5470c6"></span> 关联实体</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#fac858"></span> 扩展实体</div>
+</div>
+
+<div id="node-tooltip"></div>
+
+<div id="footer-bar">
+  <span id="footer-cache">数据: OwnThink 百科</span>
+  <span id="footer-elapsed"></span>
+  <span id="footer-hint">搜索实体名开始探索 · 点击节点扩展 · 滚轮缩放 · 拖拽平移</span>
+</div>
+
+<script>
+// ============ 本地降级知识库 ============
+var FALLBACK_KB = {
+  '人工智能': [
+    ['人工智能','包含','机器学习'],['人工智能','包含','深度学习'],
+    ['人工智能','包含','自然语言处理'],['人工智能','包含','计算机视觉'],
+    ['机器学习','包含','监督学习'],['机器学习','包含','无监督学习'],
+    ['机器学习','包含','强化学习'],['机器学习','属于','人工智能'],
+    ['自然语言处理','应用','机器翻译'],['自然语言处理','应用','情感分析'],
+    ['计算机视觉','应用','图像识别'],['计算机视觉','应用','目标检测'],
+    ['深度学习','属于','机器学习'],['深度学习','模型','CNN'],
+    ['深度学习','模型','Transformer'],
+  ],
+  '机器学习': [
+    ['机器学习','包含','监督学习'],['机器学习','包含','无监督学习'],
+    ['机器学习','包含','强化学习'],['监督学习','算法','线性回归'],
+    ['监督学习','算法','决策树'],['监督学习','算法','支持向量机'],
+    ['无监督学习','算法','K-Means聚类'],['无监督学习','算法','主成分分析'],
+    ['强化学习','算法','Q-Learning'],['强化学习','应用','游戏AI'],
+  ],
+  '知识图谱': [
+    ['知识图谱','核心组成','实体'],['知识图谱','核心组成','关系'],
+    ['知识图谱','核心组成','属性'],['知识图谱','构建方法','实体识别'],
+    ['知识图谱','构建方法','关系抽取'],['知识图谱','构建方法','知识融合'],
+    ['知识图谱','应用场景','智能搜索'],['知识图谱','应用场景','智能问答'],
+    ['知识图谱','应用场景','推荐系统'],['知识图谱','技术框架','Neo4j'],
+    ['知识图谱','技术框架','D3.js'],
+  ],
+  '深度学习': [
+    ['深度学习','模型','CNN'],['深度学习','模型','RNN'],
+    ['深度学习','模型','Transformer'],['深度学习','模型','GAN'],
+    ['深度学习','应用','图像识别'],['深度学习','应用','自然语言处理'],
+    ['深度学习','框架','PyTorch'],['深度学习','框架','TensorFlow'],
+  ],
+  '心理健康': [
+    ['心理健康','影响因素','压力'],['心理健康','影响因素','人际关系'],
+    ['心理健康','影响因素','睡眠'],['心理健康','影响因素','运动'],
+    ['心理健康','常见问题','焦虑'],['心理健康','常见问题','抑郁'],
+    ['心理健康','常见问题','失眠'],['心理健康','改善方法','心理咨询'],
+    ['心理健康','改善方法','冥想'],['心理健康','改善方法','运动疗法'],
+    ['心理健康','改善方法','认知行为疗法'],['心理健康','关联','情绪管理'],
+  ],
+  '焦虑': [
+    ['焦虑','症状','心慌'],['焦虑','症状','失眠'],
+    ['焦虑','症状','注意力不集中'],['焦虑','类型','广泛性焦虑'],
+    ['焦虑','类型','社交焦虑'],['焦虑','类型','恐慌症'],
+    ['焦虑','改善方法','深呼吸'],['焦虑','改善方法','正念冥想'],
+    ['焦虑','改善方法','认知行为疗法'],['焦虑','改善方法','运动'],
+  ],
+  '抑郁': [
+    ['抑郁','症状','情绪低落'],['抑郁','症状','兴趣丧失'],
+    ['抑郁','症状','睡眠障碍'],['抑郁','症状','食欲改变'],
+    ['抑郁','改善方法','心理咨询'],['抑郁','改善方法','药物治疗'],
+    ['抑郁','改善方法','运动疗法'],['抑郁','改善方法','社会支持'],
+  ],
+};
+
+// ============ 将降级数据中 avp 格式的三元组转成 OwnThink 风格的 [{entity,relation,value}] ============
+function normTriplets(entityName, avpList) {
+  var result = [];
+  for (var i = 0; i < avpList.length; i++) {
+    var row = avpList[i];
+    if (row.length >= 2) {
+      result.push({entity: entityName, relation: row[0], value: row[1]});
+    }
+  }
+  return result;
+}
+
+// ============ 查询知识资料（OwnThink API + 本地降级） ============
+function queryKnowledge(entityName, callback) {
+  var apiUrl = 'https://api.ownthink.com/kg/knowledge?entity=' + encodeURIComponent(entityName);
+  fetch(apiUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.message === 'success' && data.data && data.data.avp && data.data.avp.length > 0) {
+        var triplets = [];
+        var avpList = data.data.avp;
+        for (var i = 0; i < avpList.length; i++) {
+          var row = avpList[i];
+          if (row.length >= 2) {
+            triplets.push({entity: entityName, relation: row[0], value: row[1]});
+          }
+        }
+        callback(null, triplets, false);
+        return;
+      }
+      // 降级
+      fallback(entityName, callback);
+    })
+    .catch(function() {
+      fallback(entityName, callback);
+    });
+}
+
+function fallback(entityName, callback) {
+  for (var key in FALLBACK_KB) {
+    if (entityName.indexOf(key) >= 0 || key.indexOf(entityName) >= 0) {
+      callback(null, normTriplets(key, FALLBACK_KB[key]), true);
+      return;
+    }
+  }
+  callback(null, [], true);
+}
+
+// ============ D3.js 力导向图 ============
+var kgVis;
+
+(function() {
+  function KgVis(containerId) {
+    this.container = d3.select('#' + containerId);
+    this.svg = null;
+    this.mainGroup = null;
+    this.simulation = null;
+    this.zoom = null;
+    this.graphData = {nodes:[], links:[]};
+    this.expandedNodes = new Set();
+    this.currentRoot = '';
+    this.colorScheme = ['#5470c6','#91cc75','#fac858','#ee6666','#73c0de','#3ba272','#fc8452','#9a60b4'];
+    this.rootColor = '#e74c3c';
+  }
+
+  KgVis.prototype.init = function(rootNode) {
+    this.currentRoot = rootNode;
+    var w = this.container.node().clientWidth;
+    var h = this.container.node().clientHeight;
+    var self = this;
+
+    this.svg = this.container.append('svg').attr('width', w).attr('height', h).style('cursor','grab');
+
+    // 箭头
+    var defs = this.svg.append('defs');
+    defs.append('marker').attr('id','arrowhead').attr('viewBox','0 -5 10 10').attr('refX',22).attr('refY',0)
+      .attr('markerWidth',8).attr('markerHeight',8).attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#999');
+
+    this.zoom = d3.zoom().scaleExtent([0.1,5]).on('zoom',function(e){self.mainGroup.attr('transform',e.transform)});
+    this.svg.call(this.zoom);
+    this.mainGroup = this.svg.append('g');
+
+    this.simulation = d3.forceSimulation()
+      .force('link', d3.forceLink().id(function(d){return d.id}).distance(120))
+      .force('charge', d3.forceManyBody().strength(-350))
+      .force('center', d3.forceCenter(w/2, h/2))
+      .force('collision', d3.forceCollide().radius(25))
+      .alphaDecay(0.02);
+
+    this.fetchAndRender(rootNode, false);
+  };
+
+  KgVis.prototype.transformToGraph = function(triplets, rootName) {
+    var nodes=[], links=[], nodeSet=new Set();
+    nodes.push({id:rootName, group:1, is_root:true});
+    nodeSet.add(rootName);
+    for (var i=0; i<triplets.length; i++) {
+      var t = triplets[i];
+      var s = t.entity || '', v = t.value || '';
+      if (!s || !v) continue;
+      for (var j=0; j<2; j++) {
+        var n = j===0 ? s : v;
+        if (n && !nodeSet.has(n)) {
+          nodes.push({id:n, group: (nodes.length%7)+1, is_root:false});
+          nodeSet.add(n);
+        }
+      }
+      links.push({source:s, target:v, value:t.relation||''});
+    }
+    return {nodes:nodes, links:links};
+  };
+
+  KgVis.prototype.mergeGraph = function(oldData, newData) {
+    var mergedNodes = oldData.nodes.slice();
+    var mergedLinks = oldData.links.slice();
+    var nodeSet = new Set(oldData.nodes.map(function(n){return n.id}));
+    var linkSet = new Set(oldData.links.map(function(l){
+      return (l.source.id||l.source)+'|'+(l.value||'')+'|'+(l.target.id||l.target);
+    }));
+    for (var i=0; i<newData.nodes.length; i++) {
+      var nd = newData.nodes[i];
+      if (!nodeSet.has(nd.id)) { mergedNodes.push(nd); nodeSet.add(nd.id); }
+    }
+    for (var i=0; i<newData.links.length; i++) {
+      var lk = newData.links[i];
+      var key = lk.source+'|'+lk.value+'|'+lk.target;
+      if (!linkSet.has(key)) { mergedLinks.push(lk); linkSet.add(key); }
+    }
+    return {nodes:mergedNodes, links:mergedLinks};
+  };
+
+  KgVis.prototype.resetAndExplore = function(name) {
+    this.currentRoot = name;
+    this.expandedNodes = new Set();
+    this.expandedNodes.add(name);
+    this.graphData = {nodes:[],links:[]};
+    this.fetchAndRender(name, false);
+  };
+
+  KgVis.prototype.fetchAndRender = function(name, incremental) {
+    var self = this;
+    self.showStatus('正在加载「'+name+'」的知识图谱...', 'info');
+    document.getElementById('search-btn').disabled = true;
+    document.getElementById('search-btn').textContent = '加载中...';
+
+    queryKnowledge(name, function(err, triplets, fromFallback) {
+      if (triplets.length === 0) {
+        self.showStatus('暂无「'+name+'」的关联知识，试试其他实体', 'info');
+        document.getElementById('search-btn').disabled = false;
+        document.getElementById('search-btn').textContent = '搜索';
+        return;
+      }
+
+      var newData = self.transformToGraph(triplets, name);
+      var dataToRender;
+      if (incremental) {
+        dataToRender = self.mergeGraph(self.graphData, newData);
+        self.expandedNodes.add(name);
+      } else {
+        dataToRender = newData;
+        self.expandedNodes = new Set();
+        self.expandedNodes.add(name);
+      }
+      self.graphData = dataToRender;
+      self.currentRoot = name;
+      self.updateGraph(dataToRender);
+
+      document.getElementById('search-btn').disabled = false;
+      document.getElementById('search-btn').textContent = '搜索';
+      document.getElementById('node-count').textContent = '节点: '+dataToRender.nodes.length;
+      document.getElementById('link-count').textContent = '边: '+dataToRender.links.length;
+      document.getElementById('footer-elapsed').textContent =
+        '来源: ' + (fromFallback ? '本地知识库' : 'OwnThink百科');
+
+      self.showStatus('已加载「'+name+'」：'+dataToRender.nodes.length+' 节点，'+dataToRender.links.length+' 关系', 'success');
+
+      // 通知父窗口（苍穹 Iframe）
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({type:'kg_loaded', node:name}, '*'); } catch(e) {}
+      }
+    });
+  };
+
+  KgVis.prototype.updateGraph = function(data) {
+    var self = this;
+    // 边
+    var linkSel = this.mainGroup.selectAll('.link-group').data(data.links, function(d){
+      return (d.source.id||d.source)+'|'+d.value+'|'+(d.target.id||d.target);
+    });
+    var linkEnter = linkSel.enter().append('g').attr('class','link-group');
+    linkEnter.append('line').attr('class','link').attr('stroke','#bbb').attr('stroke-width',1.5)
+      .attr('stroke-opacity',0.7).attr('marker-end','url(#arrowhead)');
+    linkEnter.append('text').attr('class','link-label').attr('font-size',10).attr('fill','#888')
+      .attr('text-anchor','middle').attr('dy',-5).text(function(d){return d.value||''});
+    linkSel.exit().remove();
+    var links = linkEnter.merge(linkSel);
+
+    // 节点
+    var nodeSel = this.mainGroup.selectAll('.node-group').data(data.nodes, function(d){return d.id});
+    var nodeEnter = nodeSel.enter().append('g').attr('class','node-group').attr('cursor','pointer')
+      .call(d3.drag()
+        .on('start', function(e,d) { if(!e.active) self.simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+        .on('drag', function(e,d) { d.fx=e.x; d.fy=e.y; })
+        .on('end', function(e,d) { if(!e.active) self.simulation.alphaTarget(0); d.fx=null; d.fy=null; })
+      )
+      .on('click', function(e,d) { e.stopPropagation(); self.onNodeClick(d); })
+      .on('mouseenter', function(e,d) {
+        var t=document.getElementById('node-tooltip');
+        t.style.display='block';
+        t.innerHTML='<strong>'+d.id+'</strong>'+(d.is_root?'<br><em>根节点</em>':'')+
+          (self.expandedNodes.has(d.id)?'<br><small>已展开</small>':'<br><small>点击扩展</small>');
+        t.style.left=(e.pageX+15)+'px'; t.style.top=(e.pageY-10)+'px';
+      })
+      .on('mouseleave',function(){
+        document.getElementById('node-tooltip').style.display='none';
+      });
+
+    nodeEnter.append('circle')
+      .attr('r', function(d){ return d.is_root?18:Math.min(Math.sqrt((d.weight||1))*4+8, 22); })
+      .attr('fill', function(d){
+        if (d.is_root) return self.rootColor;
+        return self.colorScheme[(d.group||1)%self.colorScheme.length];
+      })
+      .attr('stroke','#fff').attr('stroke-width',2.5);
+
+    nodeEnter.filter(function(d){return d.is_root})
+      .append('circle').attr('class','node-glow').attr('r',24).attr('fill','none')
+      .attr('stroke',self.rootColor).attr('stroke-width',2).attr('stroke-opacity',0.3);
+
+    nodeEnter.append('text').attr('class','node-label')
+      .attr('dy', function(d){ var r=d.is_root?18:Math.min(Math.sqrt((d.weight||1))*4+8,22); return r+14; })
+      .attr('text-anchor','middle').attr('fill','#333')
+      .text(function(d){ return d.id.length>8 ? d.id.substring(0,7)+'…' : d.id; });
+
+    nodeSel.exit().remove();
+    var nodes = nodeEnter.merge(nodeSel);
+
+    this.simulation.nodes(data.nodes);
+    this.simulation.force('link').links(data.links);
+    this.simulation.on('tick', function(){
+      links.select('line').attr('x1',function(d){return d.source.x}).attr('y1',function(d){return d.source.y})
+        .attr('x2',function(d){return d.target.x}).attr('y2',function(d){return d.target.y});
+      links.select('text').attr('x',function(d){return (d.source.x+d.target.x)/2})
+        .attr('y',function(d){return (d.source.y+d.target.y)/2});
+      nodes.attr('transform',function(d){return 'translate('+d.x+','+d.y+')'});
+    });
+    this.simulation.alpha(0.5).restart();
+  };
+
+  KgVis.prototype.onNodeClick = function(d) {
+    if (this.expandedNodes.has(d.id)) {
+      this.showStatus('节点「'+d.id+'」已展开', 'info');
+      return;
+    }
+    this.fetchAndRender(d.id, true);
+  };
+
+  KgVis.prototype.fitToScreen = function() {
+    var w = this.container.node().clientWidth, h = this.container.node().clientHeight;
+    var b = this.mainGroup.node().getBBox();
+    if (b.width===0) return;
+    var s = Math.min(0.9, Math.min(w/b.width, h/b.height)*0.85);
+    var t = [w/2-s*(b.x+b.width/2), h/2-s*(b.y+b.height/2)];
+    this.svg.transition().duration(750).call(this.zoom.transform, d3.zoomIdentity.translate(t[0],t[1]).scale(s));
+  };
+
+  KgVis.prototype.resize = function() {
+    var w = this.container.node().clientWidth, h = this.container.node().clientHeight;
+    this.svg.attr('width',w).attr('height',h);
+    this.simulation.force('center', d3.forceCenter(w/2, h/2)).alpha(0.1).restart();
+  };
+
+  KgVis.prototype.showStatus = function(msg, type) {
+    var el = document.getElementById('status-message');
+    el.style.display = 'block'; el.textContent = msg;
+    el.className = 'status-'+type;
+    if (type!=='info') {
+      clearTimeout(this._st);
+      this._st = setTimeout(function(){ el.style.display='none'; }, 3000);
+    }
+  };
+
+  // ============ 初始化 ============
+  window.addEventListener('DOMContentLoaded', function() {
+    var params = new URLSearchParams(window.location.search);
+    var initialRoot = params.get('root_node') || '人工智能';
+    document.getElementById('search-input').value = initialRoot;
+
+    kgVis = new KgVis('kg-container');
+    kgVis.init(initialRoot);
+
+    document.getElementById('search-btn').addEventListener('click', function(){
+      var q = document.getElementById('search-input').value.trim();
+      if (q) kgVis.resetAndExplore(q);
+    });
+    document.getElementById('search-input').addEventListener('keydown', function(e){
+      if (e.key==='Enter') { var q=e.target.value.trim(); if(q) kgVis.resetAndExplore(q); }
+    });
+    document.getElementById('btn-reset').addEventListener('click', function(){
+      var q = document.getElementById('search-input').value.trim()||'心理健康';
+      kgVis.resetAndExplore(q);
+    });
+    document.getElementById('btn-fit').addEventListener('click', function(){
+      kgVis.fitToScreen();
+    });
+    var rt;
+    window.addEventListener('resize', function(){
+      clearTimeout(rt); rt = setTimeout(function(){ kgVis.resize(); }, 200);
+    });
+  });
+})();
+</script>
+</body>
+</html>
