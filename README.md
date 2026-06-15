@@ -1,83 +1,88 @@
-lixiaoshuai.github.io
-欢迎来到我的个人网站项目！这个项目旨在通过HTML技术展示一些基础的网页内容和功能。以下是项目的主要内容和结构说明。
-项目结构
-day1&2.html
-主要介绍HTML5的基本概念和特性。
-内容包括HTML5的定义、目标、新特性以及标准制定时间等。
-day3.html
-展示了HTML中的一些常用元素和功能。
-包括超链接、图片、视频以及无序列表的使用示例。
-day4.html
-提供了一个简单的表单示例。
-包含账号和密码输入框，用于展示HTML表单的基本元素和布局。
-文件内容概述
-day1&2.html
-HTML
-复制
-<html>
-<head>
-    <title>苑苑大帅帅</title>
-</head>
-<body>
-    <h1>HTML5</h1>
-    <p>HTML5是HTML最新的版本，它的目标是为了更好的支持Web应用程序。</p>
-    <p>HTML5包括更多的语义元素、更好的表单元素、更多的API以及更多的能力。</p>
-    <p>HTML5是在2014年10月由W3C完成标准制定的。</p>
-</body>
-</html>
-预览
-day3.html
-HTML
-复制
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <a href="https://www.doubao.com/chat/1804419595968514" target="_blank">操死你妈</a>
-    <br>
-    <img src="https://tiebapic.baidu.com/forum/6w%3D580%3B/sign=a3066f312659252da3171d0c04a0023b/4a36acaf2edda3cc0626350b47e93901203f92df.jpg?tbpicau=2025-03-12-05_5f30fbae6e3465b5c9b82c30a4eac73f" title="你这辈子就这样了">
-    <br>
-    <video src="https://www.bilibili.com/video/BV1kM4y127Li?t=602.9&p=14" controls></video>
-    <ul>
-        <li>草泥马</li>
-    </ul>
-</body>
-</html>
-预览
-day4.html
-HTML
-复制
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    账号<input type="text" name="username" id="username" placeholder="请输入账号">
-    <br>
-    密码<input type="password" name="password" id="password" placeholder="请输入密码">
-    <br>
-</body>
-</html>
-预览
-使用说明
-运行项目
-将项目文件克隆到本地。
-打开任意一个HTML文件即可在浏览器中查看内容。
-修改内容
-如果需要修改网页内容，可以直接编辑对应的HTML文件。
-根据HTML语法进行修改和扩展。
-注意事项
-项目中的部分链接和资源可能需要根据实际情况进行调整。
-如果需要进一步扩展功能，可以学习更多HTML、CSS和JavaScript知识。
-联系方式
-如果你有任何问题或建议，欢迎通过以下方式联系我：
-邮箱：[你的邮箱地址]
-GitHub：[你的GitHub主页链接]
-感谢你的关注和支持！
+# 🌐 lixiaoshuai-git.github.io
+
+个人HTML学习项目仓库，通过GitHub Pages部署的前端学习作品集。
+
+## 📋 项目简介
+
+这是一个循序渐进的HTML学习实践项目，包含从基础到进阶的网页开发练习。每天的学习内容都以独立的HTML文件呈现，帮助系统掌握前端开发基础知识。
+
+## 📁 文件结构
+
+```
+lixiaoshuai-git.github.io/
+├── day1&2.html      # Day 1-2: HTML5 基础概念与特性
+├── day3.html        # Day 3: HTML常用元素与功能
+├── day4.html        # Day 4: 表单元素与布局
+├── day5.html        # Day 5: 进阶内容
+├── day5.css         # Day 5: 样式文件
+├── day6.html        # Day 6: 进阶内容
+├── day6.css         # Day 6: 样式文件
+├── day7.html        # Day 7: 综合实践
+├── knowledge.html   # 知识汇总页面
+└── 资源文件         # 图片等静态资源
+```
+
+## 📚 学习内容
+
+### Day 1 & 2 - HTML5 基础
+- HTML5 的定义与发展目标
+- HTML5 新特性详解
+- 语义化标签介绍
+- W3C 标准制定历程
+
+### Day 3 - 常用元素实战
+- 超链接（a标签）的使用
+- 图片（img标签）插入与优化
+- 视频嵌入技术
+- 有序/无序列表应用
+- 网页常用元素综合练习
+
+### Day 4 - 表单开发
+- 账号密码输入框
+- 表单基本元素
+- 表单布局设计
+- 用户交互体验优化
+
+### Day 5-7 - 进阶学习
+- CSS样式美化
+- 响应式设计基础
+- 综合页面开发
+- 知识体系整合
+
+## 🚀 快速开始
+
+### 在线预览
+访问：https://lixiaoshuai-git.github.io
+
+### 本地运行
+1. 克隆仓库到本地
+```bash
+git clone https://github.com/lixiaoshuai-git/lixiaoshuai-git.github.io.git
+```
+
+2. 打开任意HTML文件即可在浏览器中预览
+```bash
+# 例如打开第一天的学习内容
+open day1&2.html
+```
+
+## ✏️ 修改与扩展
+
+1. 直接编辑对应的 `.html` 文件修改网页内容
+2. 根据HTML/CSS语法进行功能扩展
+3. 可进一步学习JavaScript增加交互功能
+
+## 📝 注意事项
+
+- 项目中的部分链接和资源路径可能需要根据实际部署环境调整
+- 建议使用现代浏览器（Chrome、Firefox、Edge等）获得最佳预览效果
+- 图片资源已包含在仓库中，无需额外配置
+
+## 🤝 联系方式
+
+如有问题或建议，欢迎通过以下方式联系：
+- GitHub: [@lixiaoshuai-git](https://github.com/lixiaoshuai-git)
+
+---
+
+⭐ 如果这个项目对你有帮助，欢迎给个 Star 支持！
