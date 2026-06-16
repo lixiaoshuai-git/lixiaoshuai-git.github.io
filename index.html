@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心理健康知识图谱</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6fa;color:#333}
+#toolbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:#fff;border-bottom:1px solid #e8e8e8;box-shadow:0 1px 4px rgba(0,0,0,.06);z-index:100;position:relative;flex-wrap:wrap}
+#brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand-icon{font-size:22px;color:#27ae60}
+.brand-text{font-size:16px;font-weight:700;color:#333}
+#search-box{display:flex;align-items:center;flex:1;max-width:460px;min-width:180px}
+#search-input{flex:1;height:36px;padding:0 14px;border:1px solid #d9d9d9;border-right:none;border-radius:6px 0 0 6px;font-size:14px;outline:none;transition:border-color .2s}
+#search-input:focus{border-color:#27ae60;box-shadow:0 0 0 2px rgba(39,174,96,.15)}
+#search-btn{height:36px;padding:0 20px;border:none;border-radius:0 6px 6px 0;background:#27ae60;color:#fff;font-size:14px;cursor:pointer;transition:background .2s}
+#search-btn:hover{background:#219a52}
+#search-btn:disabled{background:#a0aec0;cursor:not-allowed}
+#toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+#toolbar-actions button,#btn-add{height:32px;padding:0 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:13px;color:#555;cursor:pointer;transition:all .2s}
+#toolbar-actions button:hover,#btn-add:hover{border-color:#27ae60;color:#27ae60;background:#f0faf4}
+#btn-add{background:#27ae60;color:#fff;border-color:#27ae60;font-weight:600}
+#btn-add:hover{background:#219a52;color:#fff}
+.badge{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#f0faf4;color:#27ae60;white-space:nowrap}
+#kg-container{position:absolute;top:60px;left:0;right:0;bottom:28px;background:linear-gradient(135deg,#fafbfd 0%,#f0f2f8 100%);overflow:hidden}
+#status-message{display:none;position:absolute;top:70px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:6px;font-size:14px;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.1);pointer-events:none}
+.status-info{display:block!important;background:#e6f7ff;border:1px solid #91d5ff;color:#0050b3}
+.status-success{display:block!important;background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+.status-error{display:block!important;background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+.node-group circle{transition:stroke-width .15s}
+.node-group:hover circle{stroke-width:3.5px;filter:brightness(1.1) drop-shadow(0 2px 4px rgba(0,0,0,.2))}
+.node-glow{animation:pulse 2s ease-in-out infinite}@keyframes pulse{0%,100%{stroke-opacity:.3}50%{stroke-opacity:.6}}
+.node-label{pointer-events:none;text-shadow:0 1px 2px rgba(255,255,255,.9);font-size:11px}
+.link{transition:stroke .2s}
+.link-group:hover .link{stroke:#27ae60;stroke-width:2.5px}
+.link-label{pointer-events:none;text-shadow:0 1px 1px rgba(255,255,255,.8);font-size:10px;fill:#888}
+#node-tooltip{display:none;position:absolute;padding:8px 14px;background:rgba(255,255,255,.95);border:1px solid #d9d9d9;border-radius:6px;font-size:13px;color:#333;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;pointer-events:none;white-space:nowrap}
+#legend-panel{position:absolute;right:16px;top:80px;padding:12px 16px;background:rgba(255,255,255,.92);border:1px solid #e8e8e8;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);z-index:50;font-size:12px}
+.legend-title{font-size:12px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:1px}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:#666}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+#footer-bar{position:absolute;bottom:0;left:0;right:0;height:28px;display:flex;align-items:center;gap:20px;padding:0 20px;background:#fff;border-top:1px solid #e8e8e8;font-size:11px;color:#999;z-index:100}
+#footer-hint{margin-left:auto;color:#bbb}
+
+/* 添加弹窗 */
+#add-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;align-items:center;justify-content:center}
+#add-modal.show{display:flex}
+#add-modal .modal-box{background:#fff;border-radius:12px;padding:28px 32px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+#add-modal h3{margin-bottom:6px;font-size:18px;color:#333}
+#add-modal .sub{font-size:12px;color:#999;margin-bottom:18px}
+#add-modal label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:4px;margin-top:14px}
+#add-modal input,#add-modal select{width:100%;height:36px;padding:0 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;outline:none;transition:border-color .2s}
+#add-modal input:focus,#add-modal select:focus{border-color:#27ae60;box-shadow:0 0 0 2px rgba(39,174,96,.12)}
+#add-modal .hint{font-size:11px;color:#aaa;margin-top:3px}
+#add-modal .btn-row{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+#add-modal .btn-row button{height:36px;padding:0 22px;border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s}
+#add-modal .btn-cancel{background:#fff;border:1px solid #d9d9d9;color:#666}
+#add-modal .btn-cancel:hover{background:#f5f5f5}
+#add-modal .btn-confirm{background:#27ae60;border:none;color:#fff}
+#add-modal .btn-confirm:hover{background:#219a52}
+
+/* 自定义节点标记 */
+.node-group circle.custom{stroke:#f39c12;stroke-width:3px;stroke-dasharray:4 2}
+
+/* 标签搜索 */
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag-chip{padding:4px 12px;border-radius:14px;font-size:12px;background:#f0faf4;color:#27ae60;border:1px solid #d5f5e3;cursor:pointer;transition:all .15s}
+.tag-chip:hover{background:#27ae60;color:#fff}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div id="brand"><span class="brand-icon">◆</span><span class="brand-text">心理健康知识图谱</span></div>
+  <div id="search-box">
+    <input type="text" id="search-input" placeholder="搜索心理健康相关概念..." autocomplete="off">
+    <button id="search-btn" title="搜索">搜索</button>
+  </div>
+  <div id="toolbar-actions">
+    <button id="btn-add" title="添加节点和关系">+ 添加</button>
+    <button id="btn-reset">重置</button>
+    <button id="btn-fit">适应</button>
+    <span id="node-count" class="badge">节点: 0</span>
+    <span id="link-count" class="badge">边: 0</span>
+  </div>
+  <!-- 快捷标签 -->
+  <div class="tag-list" id="tag-list" style="flex-basis:100%;padding-bottom:6px;display:none">
+    <span class="tag-chip" onclick="quickSearch('心理健康')">心理健康</span>
+    <span class="tag-chip" onclick="quickSearch('焦虑')">焦虑</span>
+    <span class="tag-chip" onclick="quickSearch('抑郁')">抑郁</span>
+    <span class="tag-chip" onclick="quickSearch('压力')">压力</span>
+    <span class="tag-chip" onclick="quickSearch('睡眠')">睡眠</span>
+    <span class="tag-chip" onclick="quickSearch('情绪管理')">情绪管理</span>
+    <span class="tag-chip" onclick="quickSearch('人际关系')">人际关系</span>
+    <span class="tag-chip" onclick="quickSearch('认知行为疗法')">认知行为疗法</span>
+  </div>
+</div>
+
+<div id="kg-container"></div>
+<div id="status-message"></div>
+
+<div id="legend-panel">
+  <div class="legend-title">图例</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span> 根节点</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#5470c6"></span> 百科实体</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#fac858"></span> 扩展实体</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#f39c12;border:2px dashed #f39c12;width:10px;height:10px"></span> 手动添加</div>
+</div>
+
+<div id="node-tooltip"></div>
+
+<div id="footer-bar">
+  <span id="footer-cache">数据: 心理健康知识库</span>
+  <span id="footer-elapsed"></span>
+  <span id="footer-hint">搜索实体开始探索 · 点击节点扩展 · 点击「+ 添加」录入知识</span>
+</div>
+
+<!-- 添加弹窗 -->
+<div id="add-modal">
+  <div class="modal-box">
+    <h3>添加知识节点</h3>
+    <p class="sub">手动录入心理健康领域的实体和关系</p>
+    <label>源实体（起点）</label>
+    <input id="add-source" placeholder="例如：抑郁症" list="entity-suggestions">
+    <div class="hint">可以是已有节点，也可以是新节点</div>
+    <label>关系类型</label>
+    <select id="add-relation">
+      <option value="">-- 选择关系 --</option>
+      <option value="症状">症状</option>
+      <option value="影响因素">影响因素</option>
+      <option value="改善方法">改善方法</option>
+      <option value="治疗方式">治疗方式</option>
+      <option value="相关概念">相关概念</option>
+      <option value="类型">类型</option>
+      <option value="关联">关联</option>
+      <option value="预防措施">预防措施</option>
+      <option value="易感人群">易感人群</option>
+      <option value="评估工具">评估工具</option>
+      <option value="包含">包含</option>
+    </select>
+    <div class="hint">描述两个实体之间的关联</div>
+    <label>目标实体（终点）</label>
+    <input id="add-target" placeholder="例如：情绪低落" list="entity-suggestions">
+    <datalist id="entity-suggestions"></datalist>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeAddModal()">取消</button>
+      <button class="btn-confirm" onclick="addEntity()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 心理健康本地知识库 ============
+var FALLBACK_KB = {
+  '心理健康': [
+    ['心理健康','影响因素','压力'],['心理健康','影响因素','人际关系'],
+    ['心理健康','影响因素','睡眠'],['心理健康','影响因素','运动'],
+    ['心理健康','影响因素','饮食'],['心理健康','影响因素','遗传'],
+    ['心理健康','影响因素','童年经历'],['心理健康','常见问题','焦虑'],
+    ['心理健康','常见问题','抑郁'],['心理健康','常见问题','失眠'],
+    ['心理健康','常见问题','社交恐惧'],['心理健康','常见问题','强迫症'],
+    ['心理健康','常见问题','创伤后应激障碍'],['心理健康','改善方法','心理咨询'],
+    ['心理健康','改善方法','正念冥想'],['心理健康','改善方法','运动疗法'],
+    ['心理健康','改善方法','认知行为疗法'],['心理健康','改善方法','药物治疗'],
+    ['心理健康','改善方法','艺术治疗'],['心理健康','关联','情绪管理'],
+    ['心理健康','关联','自我认知'],['心理健康','关联','社会支持'],
+    ['心理健康','关联','心理韧性'],
+  ],
+  '焦虑': [
+    ['焦虑','症状','心慌'],['焦虑','症状','失眠'],
+    ['焦虑','症状','注意力不集中'],['焦虑','症状','坐立不安'],
+    ['焦虑','症状','过度担忧'],['焦虑','症状','肌肉紧张'],
+    ['焦虑','类型','广泛性焦虑'],['焦虑','类型','社交焦虑'],
+    ['焦虑','类型','惊恐障碍'],['焦虑','类型','特定恐惧症'],
+    ['焦虑','类型','分离焦虑'],['焦虑','改善方法','深呼吸'],
+    ['焦虑','改善方法','正念冥想'],['焦虑','改善方法','渐进式肌肉放松'],
+    ['焦虑','改善方法','认知行为疗法'],['焦虑','改善方法','运动'],
+    ['焦虑','改善方法','规律作息'],['焦虑','影响因素','压力'],
+    ['焦虑','影响因素','咖啡因'],['焦虑','影响因素','遗传'],
+    ['焦虑','评估工具','GAD-7 量表'],['焦虑','关联','抑郁'],
+  ],
+  '抑郁': [
+    ['抑郁','症状','情绪低落'],['抑郁','症状','兴趣丧失'],
+    ['抑郁','症状','睡眠障碍'],['抑郁','症状','食欲改变'],
+    ['抑郁','症状','疲劳乏力'],['抑郁','症状','自我否定'],
+    ['抑郁','症状','注意力减退'],['抑郁','类型','重性抑郁'],
+    ['抑郁','类型','持续性抑郁'],['抑郁','类型','季节性抑郁'],
+    ['抑郁','类型','产后抑郁'],['抑郁','改善方法','心理咨询'],
+    ['抑郁','改善方法','认知行为疗法'],['抑郁','改善方法','人际心理治疗'],
+    ['抑郁','改善方法','药物治疗'],['抑郁','改善方法','运动疗法'],
+    ['抑郁','改善方法','光照疗法'],['抑郁','改善方法','社会支持'],
+    ['抑郁','影响因素','遗传'],['抑郁','影响因素','生活事件'],
+    ['抑郁','影响因素','人际关系'],['抑郁','评估工具','PHQ-9 量表'],
+    ['抑郁','易感人群','青少年'],['抑郁','易感人群','产后女性'],
+    ['抑郁','易感人群','老年人'],['抑郁','关联','焦虑'],
+  ],
+  '认知行为疗法': [
+    ['认知行为疗法','核心原理','认知重塑'],['认知行为疗法','核心原理','行为激活'],
+    ['认知行为疗法','核心原理','暴露疗法'],['认知行为疗法','改善','焦虑'],
+    ['认知行为疗法','改善','抑郁'],['认知行为疗法','改善','强迫症'],
+    ['认知行为疗法','改善','失眠'],['认知行为疗法','改善','创伤后应激障碍'],
+    ['认知行为疗法','技术','苏格拉底式提问'],['认知行为疗法','技术','行为实验'],
+    ['认知行为疗法','技术','放松训练'],['认知行为疗法','形式','个体治疗'],
+    ['认知行为疗法','形式','团体治疗'],['认知行为疗法','形式','线上自助'],
+  ],
+  '压力': [
+    ['压力','类型','急性压力'],['压力','类型','慢性压力'],
+    ['压力','类型','创伤性压力'],['压力','生理反应','皮质醇升高'],
+    ['压力','生理反应','心率加快'],['压力','生理反应','免疫力下降'],
+    ['压力','心理反应','易怒'],['压力','心理反应','注意力下降'],
+    ['压力','心理反应','记忆力减退'],['压力','管理方法','运动'],
+    ['压力','管理方法','正念冥想'],['压力','管理方法','时间管理'],
+    ['压力','管理方法','社会支持'],['压力','管理方法','兴趣爱好'],
+    ['压力','关联','焦虑'],['压力','关联','抑郁'],['压力','关联','失眠'],
+    ['压力','关联','心血管疾病'],['压力','评估工具','生活事件量表'],
+  ],
+  '失眠': [
+    ['失眠','症状','入睡困难'],['失眠','症状','早醒'],
+    ['失眠','症状','睡眠中断'],['失眠','症状','日间疲劳'],
+    ['失眠','类型','急性失眠'],['失眠','类型','慢性失眠'],
+    ['失眠','影响因素','压力'],['失眠','影响因素','焦虑'],
+    ['失眠','影响因素','咖啡因'],['失眠','影响因素','不良睡眠习惯'],
+    ['失眠','改善方法','认知行为疗法-失眠'],['失眠','改善方法','睡眠限制'],
+    ['失眠','改善方法','刺激控制'],['失眠','改善方法','放松训练'],
+    ['失眠','改善方法','规律作息'],['失眠','关联','抑郁'],
+    ['失眠','关联','焦虑'],['失眠','关联','免疫力下降'],
+  ],
+  '人际关系': [
+    ['人际关系','类型','家庭关系'],['人际关系','类型','伴侣关系'],
+    ['人际关系','类型','朋友关系'],['人际关系','类型','职场关系'],
+    ['人际关系','影响因素','沟通方式'],['人际关系','影响因素','信任'],
+    ['人际关系','影响因素','共情能力'],['人际关系','影响因素','性格'],
+    ['人际关系','影响','心理健康'],['人际关系','影响','幸福感'],
+    ['人际关系','改善方法','积极倾听'],['人际关系','改善方法','非暴力沟通'],
+    ['人际关系','改善方法','边界设定'],['人际关系','改善方法','冲突解决'],
+    ['人际关系','问题','社交焦虑'],['人际关系','问题','孤独感'],
+    ['人际关系','问题','依赖关系'],['人际关系','关联','社会支持'],
+  ],
+  '情绪管理': [
+    ['情绪管理','核心能力','情绪识别'],['情绪管理','核心能力','情绪表达'],
+    ['情绪管理','核心能力','情绪调节'],['情绪管理','核心能力','情绪接纳'],
+    ['情绪管理','方法','正念觉察'],['情绪管理','方法','认知重评'],
+    ['情绪管理','方法','深呼吸'],['情绪管理','方法','情绪日记'],
+    ['情绪管理','关联','心理健康'],['情绪管理','关联','心理韧性'],
+    ['情绪管理','关联','人际关系'],['情绪管理','关联','压力管理'],
+  ],
+  '社交恐惧': [
+    ['社交恐惧','症状','社交场合紧张'],['社交恐惧','症状','回避社交'],
+    ['社交恐惧','症状','脸红出汗'],['社交恐惧','症状','预期焦虑'],
+    ['社交恐惧','改善方法','认知行为疗法'],['社交恐惧','改善方法','暴露疗法'],
+    ['社交恐惧','改善方法','社交技能训练'],['社交恐惧','改善方法','药物治疗'],
+    ['社交恐惧','影响因素','童年经历'],['社交恐惧','影响因素','性格特质'],
+    ['社交恐惧','关联','焦虑'],['社交恐惧','关联','回避型人格'],
+  ],
+  '强迫症': [
+    ['强迫症','症状','强迫思维'],['强迫症','症状','强迫行为'],
+    ['强迫症','症状','反复检查'],['强迫症','症状','仪式化行为'],
+    ['强迫症','类型','清洁型'],['强迫症','类型','检查型'],
+    ['强迫症','类型','对称型'],['强迫症','类型','囤积型'],
+    ['强迫症','改善方法','认知行为疗法'],['强迫症','改善方法','暴露与反应阻止'],
+    ['强迫症','改善方法','药物治疗'],['强迫症','关联','焦虑'],
+  ],
+  '心理咨询': [
+    ['心理咨询','流派','认知行为疗法'],['心理咨询','流派','精神分析'],
+    ['心理咨询','流派','人本主义'],['心理咨询','流派','家庭治疗'],
+    ['心理咨询','形式','个体咨询'],['心理咨询','形式','团体咨询'],
+    ['心理咨询','形式','线上咨询'],['心理咨询','适用范围','焦虑'],
+    ['心理咨询','适用范围','抑郁'],['心理咨询','适用范围','人际关系问题'],
+    ['心理咨询','适用范围','创伤'],['心理咨询','关联','心理健康'],
+    ['心理咨询','关联','治疗关系'],['心理咨询','关联','保密原则'],
+  ],
+};
+
+// 用户手动添加的知识（持久化到 sessionStorage）
+var CUSTOM_TRIPLETS = JSON.parse(sessionStorage.getItem('kg_custom') || '[]');
+
+// ============ 数据查询 ============
+function normTriplets(entityName, avpList) {
+  var result = [];
+  for (var i = 0; i < avpList.length; i++) {
+    var row = avpList[i];
+    if (row.length >= 2) result.push({entity: entityName, relation: row[0], value: row[1]});
+  }
+  return result;
+}
+
+function queryKnowledge(entityName, callback) {
+  var apiUrl = 'https://api.ownthink.com/kg/knowledge?entity=' + encodeURIComponent(entityName);
+  fetch(apiUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.message === 'success' && data.data && data.data.avp && data.data.avp.length > 0) {
+        var triplets = [];
+        var avpList = data.data.avp;
+        for (var i = 0; i < avpList.length; i++) {
+          var row = avpList[i];
+          if (row.length >= 2) triplets.push({entity: entityName, relation: row[0], value: row[1]});
+        }
+        // 合并自定义数据
+        var merged = triplets.concat(getCustomTriplets(entityName));
+        callback(null, merged, false);
+        return;
+      }
+      fallback(entityName, callback);
+    }).catch(function() { fallback(entityName, callback); });
+}
+
+function fallback(entityName, callback) {
+  var triplets = [];
+  for (var key in FALLBACK_KB) {
+    if (entityName.indexOf(key) >= 0 || key.indexOf(entityName) >= 0) {
+      triplets = triplets.concat(normTriplets(key, FALLBACK_KB[key]));
+    }
+  }
+  // 合并自定义数据
+  triplets = triplets.concat(getCustomTriplets(entityName));
+  // 也搜索自定义数据中 target 匹配的
+  for (var i = 0; i < CUSTOM_TRIPLETS.length; i++) {
+    var t = CUSTOM_TRIPLETS[i];
+    if (t.value === entityName || t.entity === entityName) {
+      if (!triplets.some(function(ex){return ex.entity===t.entity&&ex.relation===t.relation&&ex.value===t.value})) {
+        triplets.push(t);
+      }
+    }
+  }
+  callback(null, triplets, true);
+}
+
+function getCustomTriplets(entityName) {
+  return CUSTOM_TRIPLETS.filter(function(t) { return t.entity === entityName; });
+}
+
+// ============ D3 图谱 ============
+var kgVis;
+(function() {
+  function KgVis(cid) {
+    this.container = d3.select('#' + cid);
+    this.svg = null; this.mainGroup = null; this.simulation = null; this.zoom = null;
+    this.graphData = {nodes:[], links:[]}; this.expandedNodes = new Set(); this.currentRoot = '';
+    this.colors = ['#5470c6','#91cc75','#fac858','#ee6666','#73c0de','#3ba272','#fc8452','#9a60b4'];
+    this.rootColor = '#e74c3c';
+  }
+
+  KgVis.prototype.init = function(rootNode) {
+    this.currentRoot = rootNode;
+    var w = this.container.node().clientWidth, h = this.container.node().clientHeight, self = this;
+    this.svg = this.container.append('svg').attr('width',w).attr('height',h).style('cursor','grab');
+    var defs = this.svg.append('defs');
+    defs.append('marker').attr('id','arrowhead').attr('viewBox','0 -5 10 10')
+      .attr('refX',22).attr('refY',0).attr('markerWidth',8).attr('markerHeight',8).attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#999');
+    this.zoom = d3.zoom().scaleExtent([0.1,5]).on('zoom',function(e){self.mainGroup.attr('transform',e.transform)});
+    this.svg.call(this.zoom);
+    this.mainGroup = this.svg.append('g');
+    this.simulation = d3.forceSimulation()
+      .force('link',d3.forceLink().id(function(d){return d.id}).distance(120))
+      .force('charge',d3.forceManyBody().strength(-350))
+      .force('center',d3.forceCenter(w/2,h/2))
+      .force('collision',d3.forceCollide().radius(25)).alphaDecay(0.02);
+    this.fetchAndRender(rootNode, false);
+  };
+
+  KgVis.prototype.transformToGraph = function(triplets, rootName) {
+    var nodes=[], links=[], nodeSet=new Set();
+    nodes.push({id:rootName, group:1, is_root:true});
+    nodeSet.add(rootName);
+    for (var i=0; i<triplets.length; i++) {
+      var t = triplets[i], s = t.entity||'', v = t.value||'';
+      if (!s||!v) continue;
+      for (var j=0; j<2; j++) { var n=j===0?s:v; if(n&&!nodeSet.has(n)){nodes.push({id:n,group:(nodes.length%7)+1,is_root:false});nodeSet.add(n);} }
+      // 标记自定义边
+      var isCustom = CUSTOM_TRIPLETS.some(function(c){return c.entity===s&&c.relation===t.relation&&c.value===v;});
+      links.push({source:s, target:v, value:t.relation||'', custom: isCustom});
+    }
+    return {nodes:nodes, links:links};
+  };
+
+  KgVis.prototype.mergeGraph = function(oldData, newData) {
+    var mn=oldData.nodes.slice(), ml=oldData.links.slice();
+    var ns=new Set(oldData.nodes.map(function(n){return n.id}));
+    var ls=new Set(oldData.links.map(function(l){return (l.source.id||l.source)+'|'+(l.value||'')+'|'+(l.target.id||l.target)}));
+    for (var i=0; i<newData.nodes.length; i++) { var nd=newData.nodes[i]; if(!ns.has(nd.id)){mn.push(nd);ns.add(nd.id);} }
+    for (var i=0; i<newData.links.length; i++) { var lk=newData.links[i]; var k=lk.source+'|'+lk.value+'|'+lk.target; if(!ls.has(k)){ml.push(lk);ls.add(k);} }
+    return {nodes:mn, links:ml};
+  };
+
+  KgVis.prototype.resetAndExplore = function(name) {
+    this.currentRoot = name; this.expandedNodes = new Set(); this.expandedNodes.add(name);
+    this.graphData = {nodes:[],links:[]}; this.fetchAndRender(name, false);
+  };
+
+  KgVis.prototype.fetchAndRender = function(name, incremental) {
+    var self = this;
+    self.showStatus('正在加载「'+name+'」...','info');
+    document.getElementById('search-btn').disabled = true;
+    document.getElementById('search-btn').textContent = '加载中...';
+    queryKnowledge(name, function(err, triplets, fromFallback) {
+      if (triplets.length === 0) {
+        self.showStatus('暂无「'+name+'」的知识，可以点击「+ 添加」录入','info');
+        document.getElementById('search-btn').disabled = false;
+        document.getElementById('search-btn').textContent = '搜索';
+        return;
+      }
+      var newData = self.transformToGraph(triplets, name);
+      var dataToRender = incremental ? self.mergeGraph(self.graphData, newData) : newData;
+      if (!incremental) { self.expandedNodes = new Set(); self.expandedNodes.add(name); }
+      else { self.expandedNodes.add(name); }
+      self.graphData = dataToRender; self.currentRoot = name;
+      self.updateGraph(dataToRender);
+      document.getElementById('search-btn').disabled = false;
+      document.getElementById('search-btn').textContent = '搜索';
+      document.getElementById('node-count').textContent = '节点: '+dataToRender.nodes.length;
+      document.getElementById('link-count').textContent = '边: '+dataToRender.links.length;
+      var src = fromFallback ? '本地知识库' : 'OwnThink百科';
+      if (CUSTOM_TRIPLETS.length>0) src += ' + 手动添加('+CUSTOM_TRIPLETS.length+'条)';
+      document.getElementById('footer-elapsed').textContent = '来源: '+src;
+      self.showStatus('已加载 '+dataToRender.nodes.length+' 节点，'+dataToRender.links.length+' 关系', 'success');
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({type:'kg_loaded', node:name}, '*'); } catch(e) {}
+      }
+    });
+  };
+
+  KgVis.prototype.updateGraph = function(data) {
+    var self = this;
+    var linkSel = this.mainGroup.selectAll('.link-group').data(data.links, function(d){return (d.source.id||d.source)+'|'+d.value+'|'+(d.target.id||d.target)});
+    var linkEnter = linkSel.enter().append('g').attr('class','link-group');
+    linkEnter.append('line').attr('class','link').attr('stroke',function(d){return d.custom?'#f39c12':'#bbb'})
+      .attr('stroke-width',function(d){return d.custom?2:1.5}).attr('stroke-opacity',0.7)
+      .attr('stroke-dasharray',function(d){return d.custom?'6 3':null}).attr('marker-end','url(#arrowhead)');
+    linkEnter.append('text').attr('class','link-label').attr('font-size',10).attr('fill','#888')
+      .attr('text-anchor','middle').attr('dy',-5).text(function(d){return d.value||''});
+    linkSel.exit().remove();
+    var links = linkEnter.merge(linkSel);
+    var nodeSel = this.mainGroup.selectAll('.node-group').data(data.nodes, function(d){return d.id});
+    var nodeEnter = nodeSel.enter().append('g').attr('class','node-group').attr('cursor','pointer')
+      .call(d3.drag()
+        .on('start',function(e,d){if(!e.active)self.simulation.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+        .on('drag',function(e,d){d.fx=e.x;d.fy=e.y;})
+        .on('end',function(e,d){if(!e.active)self.simulation.alphaTarget(0);d.fx=null;d.fy=null;}))
+      .on('click',function(e,d){e.stopPropagation();self.onNodeClick(d);})
+      .on('mouseenter',function(e,d){
+        var t=document.getElementById('node-tooltip'); t.style.display='block';
+        t.innerHTML='<strong>'+d.id+'</strong>'+(d.is_root?'<br><em>根节点</em>':'')+
+          (self.expandedNodes.has(d.id)?'<br><small>已展开</small>':'<br><small>点击扩展</small>');
+        t.style.left=(e.pageX+15)+'px';t.style.top=(e.pageY-10)+'px';
+      }).on('mouseleave',function(){document.getElementById('node-tooltip').style.display='none';});
+    // 检测是否自定义节点
+    var customNodes = new Set();
+    for (var i=0; i<CUSTOM_TRIPLETS.length; i++) { customNodes.add(CUSTOM_TRIPLETS[i].entity); customNodes.add(CUSTOM_TRIPLETS[i].value); }
+    nodeEnter.append('circle').attr('r',function(d){return d.is_root?18:Math.min(Math.sqrt((d.weight||1))*4+8,22);})
+      .attr('fill',function(d){if(d.is_root)return self.rootColor;return self.colors[(d.group||1)%self.colors.length];})
+      .attr('stroke','#fff').attr('stroke-width',2.5)
+      .attr('class',function(d){return customNodes.has(d.id)?'custom':''});
+    nodeEnter.filter(function(d){return d.is_root}).append('circle').attr('class','node-glow')
+      .attr('r',24).attr('fill','none').attr('stroke',self.rootColor).attr('stroke-width',2).attr('stroke-opacity',0.3);
+    nodeEnter.append('text').attr('class','node-label')
+      .attr('dy',function(d){var r=d.is_root?18:Math.min(Math.sqrt((d.weight||1))*4+8,22);return r+14;})
+      .attr('text-anchor','middle').attr('fill','#333')
+      .text(function(d){return d.id.length>8?d.id.substring(0,7)+'…':d.id;});
+    nodeSel.exit().remove();
+    var nodes = nodeEnter.merge(nodeSel);
+    this.simulation.nodes(data.nodes); this.simulation.force('link').links(data.links);
+    this.simulation.on('tick',function(){
+      links.select('line').attr('x1',function(d){return d.source.x}).attr('y1',function(d){return d.source.y})
+        .attr('x2',function(d){return d.target.x}).attr('y2',function(d){return d.target.y});
+      links.select('text').attr('x',function(d){return (d.source.x+d.target.x)/2}).attr('y',function(d){return (d.source.y+d.target.y)/2});
+      nodes.attr('transform',function(d){return 'translate('+d.x+','+d.y+')'});
+    });
+    this.simulation.alpha(0.5).restart();
+    // 更新实体建议列表
+    updateEntitySuggestions(data.nodes);
+  };
+
+  KgVis.prototype.onNodeClick = function(d) {
+    if (this.expandedNodes.has(d.id)) { this.showStatus('已展开','info'); return; }
+    this.fetchAndRender(d.id, true);
+  };
+  KgVis.prototype.fitToScreen = function() {
+    var w=this.container.node().clientWidth,h=this.container.node().clientHeight;
+    var b=this.mainGroup.node().getBBox(); if(b.width===0)return;
+    var s=Math.min(0.9,Math.min(w/b.width,h/b.height)*0.85);
+    var t=[w/2-s*(b.x+b.width/2),h/2-s*(b.y+b.height/2)];
+    this.svg.transition().duration(750).call(this.zoom.transform,d3.zoomIdentity.translate(t[0],t[1]).scale(s));
+  };
+  KgVis.prototype.resize = function() {
+    var w=this.container.node().clientWidth,h=this.container.node().clientHeight;
+    this.svg.attr('width',w).attr('height',h);
+    this.simulation.force('center',d3.forceCenter(w/2,h/2)).alpha(0.1).restart();
+  };
+  KgVis.prototype.showStatus = function(msg, type) {
+    var el=document.getElementById('status-message');el.style.display='block';el.textContent=msg;el.className='status-'+type;
+    if(type!=='info'){clearTimeout(this._st);this._st=setTimeout(function(){el.style.display='none';},3000);}
+  };
+})();
+
+// ============ 手动添加功能 ============
+var allEntities = [];
+
+function updateEntitySuggestions(nodes) {
+  allEntities = nodes.map(function(n){return n.id});
+  var dl = document.getElementById('entity-suggestions');
+  if (dl) dl.innerHTML = allEntities.map(function(e){return '<option value="'+e+'">'}).join('');
+}
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('show');
+  document.getElementById('add-source').focus();
+  // 预填当前根节点
+  if (kgVis && kgVis.currentRoot) document.getElementById('add-source').value = kgVis.currentRoot;
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('show');
+  document.getElementById('add-source').value = '';
+  document.getElementById('add-target').value = '';
+  document.getElementById('add-relation').value = '';
+}
+
+function addEntity() {
+  var src = document.getElementById('add-source').value.trim();
+  var rel = document.getElementById('add-relation').value;
+  var tgt = document.getElementById('add-target').value.trim();
+  if (!src || !rel || !tgt) { alert('请填写完整的源实体、关系和目标实体'); return; }
+  // 检查重复
+  var dup = CUSTOM_TRIPLETS.some(function(t){return t.entity===src && t.relation===rel && t.value===tgt;});
+  if (dup) { alert('该关系已存在'); return; }
+  CUSTOM_TRIPLETS.push({entity:src, relation:rel, value:tgt});
+  sessionStorage.setItem('kg_custom', JSON.stringify(CUSTOM_TRIPLETS));
+  closeAddModal();
+  // 重新渲染当前图谱
+  kgVis.resetAndExplore(kgVis.currentRoot || src);
+  kgVis.showStatus('已添加: '+src+' —'+rel+'→ '+tgt, 'success');
+}
+
+function quickSearch(name) {
+  document.getElementById('search-input').value = name;
+  kgVis.resetAndExplore(name);
+}
+
+// ============ 初始化 ============
+window.addEventListener('DOMContentLoaded', function() {
+  var params = new URLSearchParams(window.location.search);
+  var initialRoot = params.get('root_node') || '心理健康';
+  document.getElementById('search-input').value = initialRoot;
+  // 显示标签
+  document.getElementById('tag-list').style.display = 'flex';
+
+  kgVis = new KgVis('kg-container');
+  kgVis.init(initialRoot);
+
+  document.getElementById('search-btn').addEventListener('click', function(){
+    var q = document.getElementById('search-input').value.trim();
+    if (q) kgVis.resetAndExplore(q);
+  });
+  document.getElementById('search-input').addEventListener('keydown', function(e){
+    if (e.key==='Enter') { var q=e.target.value.trim(); if(q) kgVis.resetAndExplore(q); }
+  });
+  document.getElementById('btn-reset').addEventListener('click', function(){
+    var q = document.getElementById('search-input').value.trim()||'心理健康';
+    kgVis.resetAndExplore(q);
+  });
+  document.getElementById('btn-fit').addEventListener('click', function(){ kgVis.fitToScreen(); });
+  document.getElementById('btn-add').addEventListener('click', openAddModal);
+
+  // ESC 关闭弹窗
+  document.addEventListener('keydown', function(e) {
+    if (e.key==='Escape') closeAddModal();
+  });
+  document.getElementById('add-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAddModal();
+  });
+
+  var rt;
+  window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){kgVis.resize();},200); });
+});
+</script>
+</body>
+</html>
