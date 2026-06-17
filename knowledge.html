@@ -79,6 +79,28 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
 .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag-chip{padding:4px 12px;border-radius:14px;font-size:12px;background:#f0faf4;color:#27ae60;border:1px solid #d5f5e3;cursor:pointer;transition:all .15s}
 .tag-chip:hover{background:#27ae60;color:#fff}
+
+/* 上传弹窗 */
+#upload-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;align-items:center;justify-content:center}
+#upload-modal.show{display:flex}
+#upload-modal .modal-box{background:#fff;border-radius:12px;padding:28px 32px;width:480px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+#upload-modal h3{margin-bottom:8px;font-size:18px;color:#333}
+#upload-modal .sub{font-size:12px;color:#999;margin-bottom:20px}
+.upload-dropzone{border:2px dashed #d9d9d9;border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.upload-dropzone:hover,.upload-dropzone.dragover{border-color:#27ae60;background:#f0faf4}
+.upload-dropzone .dz-icon{font-size:36px;margin-bottom:10px}
+.upload-dropzone .dz-text{font-size:14px;color:#666}
+.upload-dropzone .dz-hint{font-size:12px;color:#aaa;margin-top:6px}
+.upload-dropzone.has-file{border-color:#27ae60;background:#f0faf4}
+.upload-dropzone.has-file .dz-text{color:#27ae60;font-weight:600}
+#upload-modal .btn-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+#upload-modal .btn-row button{height:36px;padding:0 22px;border-radius:6px;font-size:14px;cursor:pointer}
+#upload-modal .btn-cancel{background:#fff;border:1px solid #d9d9d9;color:#666}
+#upload-modal .btn-cancel:hover{background:#f5f5f5}
+#upload-modal .btn-confirm{background:#27ae60;border:none;color:#fff;font-weight:600}
+#upload-modal .btn-confirm:disabled{background:#ccc;cursor:not-allowed}
+#upload-progress-bar{display:none;height:4px;background:#27ae60;border-radius:2px;margin-top:12px;transition:width .3s;width:0}
+#upload-progress-text{display:none;font-size:12px;color:#888;margin-top:4px;text-align:center}
 </style>
 </head>
 <body>
@@ -92,6 +114,7 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
   <div id="toolbar-actions">
     <button id="btn-add" title="添加节点和关系">+ 添加</button>
     <button id="btn-manage" title="管理手动添加的知识" style="background:#fff;color:#555">管理</button>
+    <button id="btn-upload-pdf" title="上传文档AI提取图谱" style="background:#8e44ad;color:#fff;border-color:#8e44ad;font-weight:600">上传文档</button>
     <button id="btn-reset">重置</button>
     <button id="btn-fit">适应</button>
     <span id="node-count" class="badge">节点: 0</span>
@@ -119,6 +142,7 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
   <div class="legend-item"><span class="legend-dot" style="background:#5470c6"></span> 百科实体</div>
   <div class="legend-item"><span class="legend-dot" style="background:#fac858"></span> 扩展实体</div>
   <div class="legend-item"><span class="legend-dot" style="background:#f39c12;border:2px dashed #f39c12;width:10px;height:10px"></span> 手动添加</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#8e44ad"></span> AI文档提取</div>
 </div>
 
 <div id="node-tooltip"></div>
@@ -172,6 +196,26 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
     <div class="btn-row">
       <button class="btn-cancel" onclick="closeManageModal()">关闭</button>
       <button class="btn-confirm" style="background:#e74c3c" onclick="clearAllCustom()">清空全部</button>
+    </div>
+  </div>
+</div>
+
+<!-- 上传文档弹窗 -->
+<div id="upload-modal">
+  <div class="modal-box">
+    <h3>上传文档生成知识图谱</h3>
+    <p class="sub">AI 自动提取文档中的实体关系，生成可视化知识图谱</p>
+    <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+      <div class="dz-icon">📄</div>
+      <div class="dz-text" id="dz-text">点击选择或拖拽文件</div>
+      <div class="dz-hint">PDF / TXT，最大 10MB</div>
+    </div>
+    <input type="file" id="file-input" accept=".pdf,.txt" style="display:none">
+    <div id="upload-progress-bar"></div>
+    <div id="upload-progress-text"></div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeUploadModal()">取消</button>
+      <button class="btn-confirm" id="btn-upload" onclick="processUpload()" disabled>开始解析</button>
     </div>
   </div>
 </div>
@@ -614,6 +658,191 @@ function clearAllCustom() {
   kgVis.showStatus('已清空所有手动添加的知识', 'success');
 }
 
+// ============ 文档上传 & AI 解析 ============
+var selectedFile = null;
+var ZHIPU_API_KEY = '91acd8b1d73d4b498e1f5c553cf70ed8.9IEFg1QNcs2ASl3M';
+
+function openUploadModal() {
+  document.getElementById('upload-modal').classList.add('show');
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.remove('show');
+  selectedFile = null;
+  document.getElementById('dz-text').textContent = '点击选择或拖拽文件';
+  document.getElementById('dropzone').classList.remove('has-file');
+  document.getElementById('btn-upload').disabled = true;
+  document.getElementById('upload-progress-bar').style.display = 'none';
+  document.getElementById('upload-progress-text').style.display = 'none';
+}
+
+// 选择文件
+function selectFile(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'pdf' && ext !== 'txt') { alert('仅支持 PDF 和 TXT 文件'); return; }
+  if (file.size > 10*1024*1024) { alert('文件不能超过 10MB'); return; }
+  selectedFile = file;
+  document.getElementById('dz-text').textContent = file.name + ' (' + formatSize(file.size) + ')';
+  document.getElementById('dropzone').classList.add('has-file');
+  document.getElementById('btn-upload').disabled = false;
+}
+
+function formatSize(bytes) {
+  return bytes < 1024*1024 ? (bytes/1024).toFixed(1)+'KB' : (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+// 拖拽支持
+(function(){
+  var dz = document.getElementById('dropzone');
+  if (!dz) return;
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', function(){ dz.classList.remove('dragover'); });
+  dz.addEventListener('drop', function(e){
+    e.preventDefault(); dz.classList.remove('dragover');
+    var f = e.dataTransfer.files[0]; if (f) selectFile(f);
+  });
+  document.getElementById('file-input').addEventListener('change', function(e){
+    var f = e.target.files[0]; if (f) selectFile(f);
+  });
+})();
+
+// 显示进度
+function showUploadProgress(text, pct) {
+  var bar = document.getElementById('upload-progress-bar');
+  var txt = document.getElementById('upload-progress-text');
+  bar.style.display = 'block'; bar.style.width = pct+'%';
+  txt.style.display = 'block'; txt.textContent = text;
+}
+
+// PDF 文本提取（浏览器端）
+function extractPdfText(file) {
+  return new Promise(function(resolve, reject) {
+    if (!window.pdfjsLib) {
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = function(){
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        doExtract(file, resolve, reject);
+      };
+      s.onerror = function(){ reject(new Error('PDF.js 加载失败，请检查网络')); };
+      document.head.appendChild(s);
+    } else {
+      doExtract(file, resolve, reject);
+    }
+  });
+}
+
+function doExtract(file, resolve, reject) {
+  var reader = new FileReader();
+  reader.onload = async function(){
+    try {
+      var pdf = await pdfjsLib.getDocument({data: new Uint8Array(reader.result)}).promise;
+      var text = '';
+      for (var i=1; i<=pdf.numPages; i++) {
+        var page = await pdf.getPage(i);
+        var content = await page.getTextContent();
+        text += content.items.map(function(it){return it.str;}).join(' ')+'\n';
+      }
+      resolve(text.trim());
+    } catch(e){ reject(e); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// 调智谱 AI 提取实体关系
+async function callAI(text) {
+  var prompt = [
+    '你是一个知识图谱提取专家。从以下文本中提取实体和关系。',
+    '严格输出JSON格式（不要markdown，不要任何解释）：',
+    '{"nodes":[{"id":"实体名","group":1}],"links":[{"source":"实体A","target":"实体B","value":"关系描述"}]}',
+    '规则：',
+    '1. 实体去重，每个实体只出现一次',
+    '2. 关系用2-4字简短描述（如「导致」「包含」「改善」「症状」「治疗」等）',
+    '3. 最多提取30条关系',
+    '4. 优先提取心理健康、病理相关的知识',
+    '文本内容：\n' + text
+  ].join('\n');
+
+  var resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+ZHIPU_API_KEY },
+    body: JSON.stringify({
+      model: 'glm-4-flash',
+      messages: [{role:'user', content:prompt}],
+      temperature: 0.3, max_tokens: 4000
+    })
+  });
+
+  if (!resp.ok) {
+    var errText = await resp.text();
+    throw new Error('API 调用失败('+resp.status+'): '+errText.substring(0,200));
+  }
+
+  var data = await resp.json();
+  if (!data.choices || !data.choices[0]) throw new Error('AI 返回格式异常');
+
+  var content = data.choices[0].message.content;
+  // 尝试提取JSON
+  var m = content.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('AI 未返回有效JSON: '+content.substring(0,100));
+  var graph = JSON.parse(m[0]);
+
+  if (!graph.nodes || !graph.links) throw new Error('AI 返回缺少 nodes 或 links');
+  return graph;
+}
+
+// 主流程
+async function processUpload() {
+  if (!selectedFile) return;
+  var btn = document.getElementById('btn-upload');
+  btn.disabled = true; btn.textContent = '解析中...';
+
+  try {
+    showUploadProgress('正在提取文本...', 20);
+    var text;
+    if (selectedFile.name.endsWith('.pdf')) {
+      text = await extractPdfText(selectedFile);
+    } else {
+      text = await selectedFile.text();
+    }
+    if (!text || text.length < 10) throw new Error('未能提取到有效文本');
+
+    // 截断过长文本
+    if (text.length > 15000) text = text.substring(0, 15000) + '...(已截断)';
+
+    showUploadProgress('文本提取完成（'+text.length+'字符），正在 AI 分析...', 50);
+
+    var graph = await callAI(text);
+
+    showUploadProgress('图谱生成完成：'+graph.nodes.length+' 实体，'+graph.links.length+' 关系', 100);
+
+    // 合并到自定义数据（标记 fromDoc:true）
+    for (var i=0; i<graph.links.length; i++) {
+      var l = graph.links[i];
+      var dup = CUSTOM_TRIPLETS.some(function(t){
+        return t.entity===l.source && t.relation===l.value && t.value===l.target;
+      });
+      if (!dup) CUSTOM_TRIPLETS.push({entity:l.source, relation:l.value, value:l.target, fromDoc:true});
+    }
+    sessionStorage.setItem('kg_custom', JSON.stringify(CUSTOM_TRIPLETS));
+
+    closeUploadModal();
+    // 用AI提取结果中的第一个实体作为根节点重绘
+    var firstNode = graph.nodes.length>0 ? graph.nodes[0].id : '心理健康';
+    kgVis.resetAndExplore(firstNode);
+    kgVis.showStatus('已从文档提取 '+graph.nodes.length+' 实体，'+graph.links.length+' 关系', 'success');
+
+  } catch(e) {
+    alert('解析失败: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '开始解析';
+  setTimeout(function(){
+    document.getElementById('upload-progress-bar').style.display = 'none';
+    document.getElementById('upload-progress-text').style.display = 'none';
+  }, 2000);
+}
+
   // ============ 初始化 ============
   function initApp() {
     var params = new URLSearchParams(window.location.search);
@@ -638,9 +867,11 @@ function clearAllCustom() {
     document.getElementById('btn-fit').addEventListener('click', function(){ kgVis.fitToScreen(); });
     document.getElementById('btn-add').addEventListener('click', openAddModal);
     document.getElementById('btn-manage').addEventListener('click', openManageModal);
-    document.addEventListener('keydown', function(e) { if (e.key==='Escape') { closeAddModal(); closeManageModal(); } });
+    document.getElementById('btn-upload-pdf').addEventListener('click', openUploadModal);
+    document.addEventListener('keydown', function(e) { if (e.key==='Escape') { closeAddModal(); closeManageModal(); closeUploadModal(); } });
     document.getElementById('add-modal').addEventListener('click', function(e) { if (e.target === this) closeAddModal(); });
     document.getElementById('manage-modal').addEventListener('click', function(e) { if (e.target === this) closeManageModal(); });
+    document.getElementById('upload-modal').addEventListener('click', function(e) { if (e.target === this) closeUploadModal(); });
     var rt;
     window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){kgVis.resize();},200); });
   }
