@@ -293,22 +293,30 @@ async function loadData() {
   refreshBtn.textContent = '加载中...';
 
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: {}, pageSize: 100, pageNo: 1 }),
-      signal: ctrl.signal
+    const respData = await new Promise((resolve, reject) => {
+      let resolved = false;
+      function handleMessage(event) {
+        if (event.data && event.data.type === 'data-analysis-query-result') {
+          window.removeEventListener('message', handleMessage);
+          if (!resolved) {
+            resolved = true;
+            if (event.data.success) { resolve(event.data.data); }
+            else { reject(new Error(event.data.error || '查询失败')); }
+          }
+        }
+      }
+      window.addEventListener('message', handleMessage);
+      window.parent.postMessage({ type: 'data-analysis-query', data: { pageSize: 100, pageNo: 1 } }, '*');
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          window.removeEventListener('message', handleMessage);
+          reject(new Error('苍穹父页面未响应（超时15秒）'));
+        }
+      }, 15000);
     });
-    clearTimeout(timer);
-    const json = await resp.json();
 
-    if (!json.status || json.errorCode !== '0') {
-      throw new Error(json.message || 'API 返回异常');
-    }
-
-    const rows = json.data?.rows || [];
+    const rows = respData?.rows || [];
     const bills = [];
     rows.forEach(row => {
       if (row.tk_alert_bill && Array.isArray(row.tk_alert_bill)) {
