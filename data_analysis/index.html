@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心理健康预警监测平台</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:#f5f6fa;color:#333;padding:24px;min-height:100vh
+}
+
+/* Header */
+.header{
+  background:linear-gradient(135deg,#4a90d9,#357abd);
+  color:#fff;padding:20px 32px;border-radius:12px;margin-bottom:24px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px
+}
+.header-left h1{font-size:22px;font-weight:600}
+.header-left .sub{font-size:13px;opacity:0.8;margin-top:4px}
+.header-right{display:flex;gap:32px}
+.stat-item{text-align:center}
+.stat-item .num{font-size:26px;font-weight:700;display:block;line-height:1.2}
+.stat-item .label{font-size:12px;opacity:0.8}
+
+/* Grid */
+.main{display:grid;grid-template-columns:1fr 380px;gap:24px;max-width:1400px}
+
+/* Card */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden}
+.card-header{
+  padding:14px 20px;border-bottom:1px solid #f0f0f0;
+  font-size:15px;font-weight:600;color:#1a1a1a;
+  display:flex;align-items:center;gap:8px
+}
+.card-header .dot{width:8px;height:8px;border-radius:50%;background:#4a90d9;flex-shrink:0}
+.card-body{padding:16px 20px}
+
+/* Scroll list */
+.scroll-wrap{position:relative;overflow:hidden;height:calc(100vh - 220px)}
+.scroll-wrap::after{
+  content:"";position:absolute;bottom:0;left:0;right:0;height:40px;
+  background:linear-gradient(transparent,#fff);pointer-events:none;z-index:2
+}
+.scroll-wrap::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:20px;
+  background:linear-gradient(#fff,transparent);pointer-events:none;z-index:2
+}
+.scroll-inner{animation:scrollUp 30s linear infinite}
+.scroll-wrap:hover .scroll-inner{animation-play-state:paused}
+@keyframes scrollUp{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+
+.record-item{
+  display:flex;align-items:center;padding:12px 20px;gap:12px;cursor:pointer;
+  transition:background 0.15s;border-bottom:1px solid #fafafa
+}
+.record-item:hover{background:#f0f5ff}
+.record-item .avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#e8f0fe,#d4e4fc);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#4a90d9;flex-shrink:0;font-weight:500
+}
+.record-item .info{flex:1;min-width:0}
+.record-item .name{font-weight:500;font-size:14px;color:#1a1a1a}
+.record-item .time{font-size:12px;color:#999;margin-top:2px}
+.record-item .desc{font-size:12px;color:#bbb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.record-item .score{
+  font-weight:700;font-size:18px;color:#4a90d9;flex-shrink:0;width:40px;text-align:right
+}
+
+.level-tag{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;flex-shrink:0}
+.level-良好{background:#e8f5e9;color:#2e7d32}
+.level-一般{background:#fff3e0;color:#e65100}
+.level-较差{background:#fce4ec;color:#c62828}
+.level-优秀{background:#e3f2fd;color:#1565c0}
+.level-关注{background:#f3e5f5;color:#7b1fa2}
+.level-预警{background:#ffebee;color:#b71c1c}
+
+/* Pie chart */
+.pie-wrap{height:300px}
+
+/* Recent list */
+.recent-item{
+  display:flex;align-items:center;padding:10px 20px;gap:10px;cursor:pointer;
+  transition:background 0.15s;border-bottom:1px solid #fafafa
+}
+.recent-item:hover{background:#f0f5ff}
+.recent-item .r-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#e8f0fe,#d4e4fc);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#4a90d9;flex-shrink:0;font-weight:500
+}
+.recent-item .r-info{flex:1;min-width:0}
+.recent-item .r-name{font-weight:500;font-size:13px}
+.recent-item .r-time{font-size:11px;color:#999}
+.recent-item .r-score{font-weight:600;font-size:14px;color:#4a90d9}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;
+  animation:fadeIn 0.2s ease
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:#fff;border-radius:16px;width:720px;max-width:95vw;max-height:85vh;
+  overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15);
+  animation:slideUp 0.25s ease
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{
+  padding:16px 24px;border-bottom:1px solid #f0f0f0;
+  display:flex;align-items:center;justify-content:space-between
+}
+.modal-header h3{font-size:17px;font-weight:600}
+.modal-close{
+  width:32px;height:32px;border-radius:8px;border:none;background:#f5f5f5;
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s;color:#666
+}
+.modal-close:hover{background:#e0e0e0}
+.modal-body{padding:20px 24px}
+.trend-wrap{height:340px}
+.student-info{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.student-info .si-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#e8f0fe,#d4e4fc);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#4a90d9;font-weight:500
+}
+.si-name{font-weight:600;font-size:15px}
+.si-id{font-size:12px;color:#999}
+
+/* Loading */
+.loading{
+  display:flex;align-items:center;justify-content:center;padding:60px;color:#999;font-size:14px
+}
+.loading .spinner{
+  width:24px;height:24px;border:2px solid #e0e0e0;border-top-color:#4a90d9;
+  border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty-state{text-align:center;padding:60px 20px;color:#bbb}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state .text{font-size:14px}
+
+/* Refresh btn */
+.refresh-btn{
+  margin-left:auto;border:none;background:#f0f5ff;color:#4a90d9;
+  padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;
+  transition:background 0.2s
+}
+.refresh-btn:hover{background:#dce8fc}
+.refresh-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}
+  body{padding:12px}
+  .header{padding:16px 20px}
+  .header-right{gap:20px}
+  .stat-item .num{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>心理健康预警监测平台</h1>
+    <div class="sub">实时监控学生心理危机预警数据</div>
+  </div>
+  <div class="header-right" id="headerStats">
+    <div class="stat-item"><span class="num" id="statTotal">-</span><span class="label">预警总数</span></div>
+    <div class="stat-item"><span class="num" id="statFocus">-</span><span class="label">需关注</span></div>
+    <div class="stat-item"><span class="num" id="statStudents">-</span><span class="label">涉及学生</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 左侧：滚动记录列表 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="dot"></span> 学生预警记录
+      <span style="font-weight:400;font-size:12px;color:#999;margin-left:8px">实时滚动中</span>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData()">刷新数据</button>
+    </div>
+    <div class="card-body" style="padding:0" id="scrollListContainer">
+      <div class="loading" id="listLoading">
+        <div class="spinner"></div> 加载中...
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧 -->
+  <div style="display:flex;flex-direction:column;gap:24px">
+    <!-- 饼状图 -->
+    <div class="card">
+      <div class="card-header"><span class="dot"></span> 情绪等级分布</div>
+      <div class="card-body">
+        <div class="loading" id="pieLoading"><div class="spinner"></div> 加载中...</div>
+        <div class="pie-wrap" id="pieChart" style="display:none"></div>
+        <div class="empty-state" id="pieEmpty" style="display:none">
+          <div class="icon">📊</div><div class="text">暂无数据</div>
+        </div>
+      </div>
+    </div>
+    <!-- 最近预警 -->
+    <div class="card">
+      <div class="card-header"><span class="dot"></span> 最近预警</div>
+      <div class="card-body" style="padding:0" id="recentList">
+        <div class="empty-state"><div class="icon">📋</div><div class="text">暂无记录</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 趋势图弹窗 -->
+<div class="modal-overlay" id="trendModal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">情绪评分趋势</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="student-info" id="studentInfo"></div>
+      <div class="loading" id="trendLoading"><div class="spinner"></div> 加载中...</div>
+      <div class="trend-wrap" id="trendChart" style="display:none"></div>
+      <div class="empty-state" id="trendEmpty" style="display:none">
+        <div class="icon">📈</div><div class="text">该学生暂无足够的历史记录</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = '/api/ierp/kapi/v2/code/code_1/kded_risk_alert_bill/chaxun';
+let allRecords = [];
+let emotionLevelMap = {};
+let pieChartInstance = null;
+let trendChartInstance = null;
+
+function useDemoData() {
+  const now = new Date();
+  const fmt = d => {
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const students = [
+    { id: '2021001', name: '张三', levels: ['良好','良好','一般','良好','良好'], scores: [88,90,72,85,92], desc: '考试压力导致情绪波动' },
+    { id: '2021002', name: '李四', levels: ['一般','较差','一般','良好','一般'], scores: [65,42,58,78,62], desc: '人际关系困扰' },
+    { id: '2021003', name: '王五', levels: ['良好','优秀','良好','良好','优秀'], scores: [90,95,88,92,96], desc: '暂无' },
+    { id: '2021004', name: '赵六', levels: ['较差','较差','预警','较差','一般'], scores: [38,30,25,35,55], desc: '家庭变故影响情绪' },
+    { id: '2021005', name: '陈七', levels: ['良好','良好','良好','一般','良好'], scores: [85,88,82,70,86], desc: '暂无' },
+    { id: '2021006', name: '孙八', levels: ['一般','一般','较差','一般','一般'], scores: [68,62,45,60,65], desc: '学业压力大' },
+    { id: '2021007', name: '周九', levels: ['优秀','良好','良好','良好','优秀'], scores: [94,86,88,85,95], desc: '暂无' },
+    { id: '2021008', name: '吴十', levels: ['一般','良好','良好','良好','良好'], scores: [72,80,84,88,82], desc: '适应期情绪波动' },
+  ];
+
+  const bills = [];
+  students.forEach(s => {
+    s.levels.forEach((lv, i) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (s.levels.length - 1 - i) * 3);
+      d.setHours(8 + Math.floor(Math.random() * 14), Math.floor(Math.random() * 60));
+      bills.push({
+        kd_student_name: s.name,
+        kd_studentid: s.id,
+        kd_emotion_level: lv,
+        kd_trigger_time: fmt(d),
+        kd_description: s.desc,
+        code_integerfield: s.scores[i]
+      });
+    });
+  });
+
+  allRecords = bills;
+  buildEmotionMap();
+  updateStats();
+  renderScrollList();
+  renderPieChart();
+  renderRecentList();
+}
+
+async function loadData() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '加载中...';
+
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: {}, pageSize: 100, pageNo: 1 }),
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
+    const json = await resp.json();
+
+    if (!json.status || json.errorCode !== '0') {
+      throw new Error(json.message || 'API 返回异常');
+    }
+
+    const rows = json.data?.rows || [];
+    const bills = [];
+    rows.forEach(row => {
+      if (row.tk_alert_bill && Array.isArray(row.tk_alert_bill)) {
+        row.tk_alert_bill.forEach(bill => bills.push(bill));
+      }
+    });
+
+    allRecords = bills;
+    buildEmotionMap();
+    updateStats();
+    renderScrollList();
+    renderPieChart();
+    renderRecentList();
+
+    refreshBtn.textContent = '刷新数据';
+  } catch (e) {
+    console.warn('API 请求失败，使用演示数据:', e.message);
+    useDemoData();
+    refreshBtn.textContent = '刷新数据';
+  } finally {
+    refreshBtn.disabled = false;
+  }
+}
+
+function buildEmotionMap() {
+  emotionLevelMap = {};
+  allRecords.forEach(r => {
+    const level = r.kd_emotion_level || '未知';
+    emotionLevelMap[level] = (emotionLevelMap[level] || 0) + 1;
+  });
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allRecords.length;
+  const focusCount = allRecords.filter(r => {
+    const lv = r.kd_emotion_level;
+    return lv === '较差' || lv === '预警' || lv === '关注';
+  }).length;
+  document.getElementById('statFocus').textContent = focusCount;
+  const studentSet = new Set(allRecords.map(r => r.kd_studentid));
+  document.getElementById('statStudents').textContent = studentSet.size;
+}
+
+function getLevelClass(level) {
+  const map = { '良好': 'level-良好', '一般': 'level-一般', '较差': 'level-较差',
+    '优秀': 'level-优秀', '关注': 'level-关注', '预警': 'level-预警' };
+  return map[level] || '';
+}
+
+function getInitial(name) {
+  return (name || '?').charAt(0);
+}
+
+function renderScrollList() {
+  const container = document.getElementById('scrollListContainer');
+  if (allRecords.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无预警记录</div></div>';
+    return;
+  }
+
+  const itemHtml = allRecords.map(r => `
+    <div class="record-item" onclick="openTrend('${esc(r.kd_studentid)}','${esc(r.kd_student_name)}')" title="点击查看趋势">
+      <div class="avatar">${getInitial(r.kd_student_name)}</div>
+      <div class="info">
+        <div class="name">${esc(r.kd_student_name)}</div>
+        <div class="time">${esc(r.kd_trigger_time)}</div>
+        <div class="desc">${esc(r.kd_description || '暂无描述')}</div>
+      </div>
+      <span class="level-tag ${getLevelClass(r.kd_emotion_level)}">${esc(r.kd_emotion_level || '未知')}</span>
+      <span class="score">${r.code_integerfield ?? '-'}</span>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="scroll-wrap">
+      <div class="scroll-inner">
+        ${itemHtml}
+        ${itemHtml}
+      </div>
+    </div>
+  `;
+}
+
+function renderRecentList() {
+  const container = document.getElementById('recentList');
+  const recent = allRecords.slice(-6).reverse();
+  if (recent.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div class="text">暂无记录</div></div>';
+    return;
+  }
+  container.innerHTML = recent.map(r => `
+    <div class="recent-item" onclick="openTrend('${esc(r.kd_studentid)}','${esc(r.kd_student_name)}')" title="点击查看趋势">
+      <div class="r-avatar">${getInitial(r.kd_student_name)}</div>
+      <div class="r-info">
+        <div class="r-name">${esc(r.kd_student_name)}</div>
+        <div class="r-time">${esc(r.kd_trigger_time)}</div>
+      </div>
+      <span class="level-tag ${getLevelClass(r.kd_emotion_level)}">${esc(r.kd_emotion_level || '未知')}</span>
+      <span class="r-score">${r.code_integerfield ?? '-'}分</span>
+    </div>
+  `).join('');
+}
+
+function renderPieChart() {
+  const loading = document.getElementById('pieLoading');
+  const chartDom = document.getElementById('pieChart');
+  const empty = document.getElementById('pieEmpty');
+
+  loading.style.display = 'none';
+
+  const entries = Object.entries(emotionLevelMap);
+  if (entries.length === 0) {
+    chartDom.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  chartDom.style.display = 'block';
+  empty.style.display = 'none';
+
+  const colors = { '优秀': '#4a90d9', '良好': '#66bb6a', '一般': '#ffa726', '较差': '#ef5350', '关注': '#ab47bc', '预警': '#e53935' };
+
+  if (pieChartInstance) pieChartInstance.dispose();
+  pieChartInstance = echarts.init(chartDom);
+  pieChartInstance.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 条 ({d}%)' },
+    legend: { bottom: 0, textStyle: { fontSize: 12 } },
+    series: [{
+      type: 'pie',
+      radius: ['50%', '75%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: 16, fontWeight: 'bold' },
+        scaleSize: 8
+      },
+      data: entries.map(([name, value]) => ({ name, value, itemStyle: { color: colors[name] || '#90a4ae' } }))
+    }]
+  });
+
+  window.addEventListener('resize', () => pieChartInstance?.resize());
+}
+
+function openTrend(studentId, studentName) {
+  document.getElementById('trendModal').style.display = 'flex';
+  document.getElementById('modalTitle').textContent = studentName + ' - 情绪评分趋势';
+  document.getElementById('studentInfo').innerHTML = `
+    <div class="si-avatar">${getInitial(studentName)}</div>
+    <div><div class="si-name">${esc(studentName)}</div><div class="si-id">学号: ${esc(studentId)}</div></div>
+  `;
+
+  document.getElementById('trendLoading').style.display = 'flex';
+  document.getElementById('trendChart').style.display = 'none';
+  document.getElementById('trendEmpty').style.display = 'none';
+
+  setTimeout(() => renderTrendChart(studentId), 100);
+}
+
+function renderTrendChart(studentId) {
+  const loading = document.getElementById('trendLoading');
+  const chartDom = document.getElementById('trendChart');
+  const empty = document.getElementById('trendEmpty');
+
+  loading.style.display = 'none';
+
+  const records = allRecords
+    .filter(r => r.kd_studentid === studentId)
+    .sort((a, b) => (a.kd_trigger_time || '').localeCompare(b.kd_trigger_time || ''));
+
+  if (records.length < 2) {
+    chartDom.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  chartDom.style.display = 'block';
+  empty.style.display = 'none';
+
+  if (trendChartInstance) trendChartInstance.dispose();
+  trendChartInstance = echarts.init(chartDom);
+  trendChartInstance.setOption({
+    tooltip: {
+      trigger: 'axis',
+      formatter: p => `${p[0].axisValue}<br/>情绪评分: <b>${p[0].value}</b> 分`
+    },
+    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+    xAxis: {
+      type: 'category',
+      data: records.map(r => r.kd_trigger_time || ''),
+      axisLabel: { rotate: 30, fontSize: 11 },
+      boundaryGap: false
+    },
+    yAxis: {
+      type: 'value',
+      min: 0, max: 100,
+      axisLabel: { formatter: '{value} 分' },
+      splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }
+    },
+    series: [{
+      type: 'line',
+      data: records.map(r => r.code_integerfield ?? 0),
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 8,
+      lineStyle: { color: '#4a90d9', width: 2.5 },
+      itemStyle: { color: '#4a90d9' },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: 'rgba(74,144,217,0.25)' },
+          { offset: 1, color: 'rgba(74,144,217,0.02)' }
+        ])
+      },
+      markLine: {
+        silent: true,
+        data: [{ yAxis: 60, label: { formatter: '警戒线', fontSize: 11 }, lineStyle: { color: '#ef5350', type: 'dashed' } }]
+      }
+    }]
+  });
+
+  window.addEventListener('resize', () => trendChartInstance?.resize());
+}
+
+function closeModal() {
+  document.getElementById('trendModal').style.display = 'none';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 启动
+loadData();
+
+// 每60秒自动刷新
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>
