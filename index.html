@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alan | Terminal</title>
+<title>Alan | ~/terminal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap');
 
   :root {
     --green: #00ff41;
@@ -17,338 +17,231 @@
     --yellow: #f1fa8c;
     --bg: #0a0a0a;
     --bg-panel: #0d1117;
+    --bg-titlebar: #161b22;
     --text: #c9d1d9;
     --text-dim: #8b949e;
+    --text-faint: #6e7681;
     --border: #21262d;
+    --border-bright: #3a4149;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'JetBrains Mono', 'Courier New', monospace;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow-x: hidden;
     cursor: default;
   }
 
-  /* Scanlines */
+  /* ── CRT layers ─────────────────────────────── */
   body::before {
     content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed; inset: 0;
     background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.08) 2px,
-      rgba(0, 0, 0, 0.08) 4px
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
     );
-    pointer-events: none;
-    z-index: 9999;
+    pointer-events: none; z-index: 9999;
   }
-
-  /* CRT vignette */
   body::after {
     content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.5) 100%);
-    pointer-events: none;
-    z-index: 9998;
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none; z-index: 9998;
   }
 
-  /* Floating particles */
-  .particles {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 0;
-  }
+  /* ── Particles ──────────────────────────────── */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
   .particle {
-    position: absolute;
-    background: var(--green);
-    opacity: 0;
+    position: absolute; background: var(--green); opacity: 0;
     animation: floatUp 8s infinite;
   }
   @keyframes floatUp {
-    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.1; }
+    0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10%  { opacity: 0.55; }
+    90%  { opacity: 0.1; }
     100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
   }
 
-  /* Main container */
+  /* ── Layout ─────────────────────────────────── */
   .main {
-    position: relative;
-    z-index: 1;
-    width: 90vw;
-    max-width: 1000px;
-    padding: 20px 0 60px;
+    position: relative; z-index: 1;
+    width: 92vw; max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px 0 56px;
   }
 
-  /* Header ASCII */
-  .banner {
-    text-align: center;
-    margin-bottom: 30px;
-  }
+  /* ── Hero: ASCII + kicker ───────────────────── */
+  .banner { text-align: center; margin-bottom: 14px; }
   .banner pre {
-    font-size: 10px;
-    line-height: 1.15;
+    font-size: 11px; line-height: 1.15;
     color: var(--green);
-    text-shadow: 0 0 8px var(--green), 0 0 20px var(--green-dark);
+    text-shadow: 0 0 8px var(--green), 0 0 24px var(--green-dark);
     animation: flickerText 5s infinite;
-    display: inline-block;
-    text-align: left;
+    display: inline-block; text-align: left;
   }
   @keyframes flickerText {
-    0%, 100% { opacity: 1; }
-    93% { opacity: 1; }
-    94% { opacity: 0.85; }
-    95% { opacity: 1; }
-    96% { opacity: 0.9; }
-    97% { opacity: 1; }
+    0%,100% { opacity: 1; } 93% { opacity: 1; }
+    94% { opacity: 0.85; } 95% { opacity: 1; }
+    96% { opacity: 0.9; }  97% { opacity: 1; }
   }
+  .kicker {
+    text-align: center;
+    font-size: 13px; color: var(--text-dim);
+    margin-bottom: 34px; letter-spacing: 0.02em;
+  }
+  .kicker .path { color: var(--green-dim); }
 
-  /* Terminal */
+  /* ── Terminal window ────────────────────────── */
   .terminal {
-    background: rgba(13, 17, 23, 0.92);
+    background: rgba(13,17,23,0.94);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     box-shadow:
-      0 0 40px rgba(0, 255, 65, 0.05),
-      0 4px 30px rgba(0, 0, 0, 0.5),
-      inset 0 0 60px rgba(0, 0, 0, 0.3);
+      0 0 48px rgba(0,255,65,0.06),
+      0 12px 40px rgba(0,0,0,0.6),
+      inset 0 0 60px rgba(0,0,0,0.3);
     backdrop-filter: blur(10px);
     position: relative;
   }
-
   .terminal::before {
     content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(180deg, rgba(0,255,65,0.015) 0%, transparent 50%, rgba(0,255,65,0.005) 100%);
-    pointer-events: none;
-    z-index: 2;
+    pointer-events: none; z-index: 2;
   }
 
   .titlebar {
-    background: #161b22;
+    background: var(--bg-titlebar);
     border-bottom: 1px solid var(--border);
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    padding: 11px 16px;
+    display: flex; align-items: center; gap: 8px;
     user-select: none;
   }
-  .dots { display: flex; gap: 8px; margin-right: 12px; }
-  .dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    transition: box-shadow 0.3s;
-  }
-  .dot-r { background: #ff5f56; }
-  .dot-y { background: #ffbd2e; }
-  .dot-g { background: #27c93f; }
-  .title-text {
-    font-size: 12px;
-    color: var(--text-dim);
-    flex: 1;
-  }
-  .title-tabs {
-    display: flex; gap: 4px;
-  }
+  .dots { display: flex; gap: 8px; margin-right: 10px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f56; } .dot-y { background: #ffbd2e; } .dot-g { background: #27c93f; }
+  .title-text { font-size: 12px; color: var(--text-dim); flex: 1; }
+  .title-tabs { display: flex; gap: 4px; }
   .tab {
-    padding: 4px 14px;
-    font-size: 11px;
-    border-radius: 4px 4px 0 0;
-    cursor: pointer;
+    padding: 5px 13px; font-size: 11px;
+    border-radius: 6px; cursor: pointer;
     color: var(--text-dim);
     border: 1px solid transparent;
-    transition: all 0.2s;
-    background: transparent;
-    font-family: inherit;
+    transition: all 0.18s;
+    background: transparent; font-family: inherit;
   }
   .tab.active {
     color: var(--green);
-    background: rgba(0,255,65,0.06);
-    border-color: var(--border);
-    border-bottom-color: var(--bg-panel);
-    margin-bottom: -1px;
-    text-shadow: 0 0 6px rgba(0,255,65,0.3);
+    background: var(--bg-panel);
+    border-color: rgba(0,204,51,0.5);
+    text-shadow: 0 0 6px rgba(0,255,65,0.35);
   }
-  .tab:hover:not(.active) { color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
 
   .body {
-    position: relative;
-    z-index: 1;
-    padding: 24px 28px;
-    min-height: 420px;
-    max-height: 65vh;
-    overflow-y: auto;
+    position: relative; z-index: 1;
+    padding: 24px 28px 26px;
+    min-height: 380px;
   }
-  .body::-webkit-scrollbar { width: 6px; }
-  .body::-webkit-scrollbar-track { background: transparent; }
-  .body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  .line {
-    margin-bottom: 8px;
-    line-height: 1.75;
-    font-size: 14px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .line.prompt {
-    color: var(--green);
-    display: flex;
-    gap: 0;
-    align-items: baseline;
-  }
+  /* ── Terminal lines ─────────────────────────── */
+  .line { margin-bottom: 8px; line-height: 1.75; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+  .line.prompt { display: flex; gap: 10px; align-items: baseline; }
   .line.prompt::before {
     content: 'alan@home:~$';
-    color: var(--cyan);
-    margin-right: 10px;
-    white-space: nowrap;
-    font-size: 13px;
+    color: var(--cyan); white-space: nowrap; font-size: 13px;
   }
-  .line.output {
-    padding-left: 20px;
-    color: var(--text);
-    border-left: 1px solid var(--border);
-    margin-left: 7px;
-    padding-bottom: 16px;
-  }
-  .line.output.last { border-left-color: transparent; }
+  .line.prompt .cmd { color: var(--green); font-weight: 500; }
+  .line.output { padding-left: 20px; color: var(--text); }
+  .line.output.dim { color: var(--text-dim); }
 
-  /* Cursor */
   .cursor {
-    display: inline-block;
-    width: 8px; height: 18px;
-    background: var(--green);
-    vertical-align: text-bottom;
-    animation: blink 1s step-end infinite;
-    margin-left: 2px;
+    display: inline-block; width: 8px; height: 18px;
+    background: var(--green); vertical-align: text-bottom;
+    animation: blink 1s step-end infinite; margin-left: 2px;
   }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-  /* Tags */
+  /* ── Syntax highlight ───────────────────────── */
+  .hl       { color: var(--green); }
+  .hl-cyan  { color: var(--cyan); }
+  .hl-purple{ color: var(--purple); }
+  .hl-yellow{ color: var(--yellow); }
+  .hl-red   { color: var(--red); }
+  .key   { color: var(--cyan); }
+  .str   { color: var(--green); }
+  .punct { color: var(--text-faint); }
+
+  /* ── Tags ───────────────────────────────────── */
   .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    margin: 2px 4px;
-    font-size: 11px;
-    border-radius: 3px;
-    border: 1px solid;
+    display: inline-block; padding: 2px 8px; margin: 2px 4px 2px 0;
+    font-size: 11px; border-radius: 3px; border: 1px solid;
   }
-  .tag.frontend {
-    color: #61dafb;
-    border-color: rgba(97, 218, 251, 0.3);
-    background: rgba(97, 218, 251, 0.06);
-  }
-  .tag.backend {
-    color: #68a063;
-    border-color: rgba(104, 160, 99, 0.3);
-    background: rgba(104, 160, 99, 0.06);
-  }
-  .tag.ai {
-    color: var(--purple);
-    border-color: rgba(187, 134, 252, 0.3);
-    background: rgba(187, 134, 252, 0.06);
-  }
-  .tag.db {
-    color: var(--yellow);
-    border-color: rgba(241, 250, 140, 0.3);
-    background: rgba(241, 250, 140, 0.06);
-  }
-  .tag.tool {
-    color: var(--cyan);
-    border-color: rgba(0, 229, 255, 0.3);
-    background: rgba(0, 229, 255, 0.06);
-  }
+  .tag.frontend { color: #61dafb; border-color: rgba(97,218,251,0.3);  background: rgba(97,218,251,0.06); }
+  .tag.backend  { color: #68a063; border-color: rgba(104,160,99,0.3);  background: rgba(104,160,99,0.06); }
+  .tag.ai       { color: var(--purple); border-color: rgba(187,134,252,0.3); background: rgba(187,134,252,0.06); }
+  .tag.db       { color: var(--yellow); border-color: rgba(241,250,140,0.3); background: rgba(241,250,140,0.06); }
+  .tag.tool     { color: var(--cyan); border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.06); }
 
-  /* Glitch */
-  .glitch {
-    position: relative;
-    animation: glitchSkew 4s infinite;
-  }
-  @keyframes glitchSkew {
-    0%, 92%, 100% { transform: none; }
-    93% { transform: skew(0.3deg); }
-    94% { transform: skew(-0.2deg); }
-    95% { transform: none; }
-  }
+  /* ── Project entries (in terminal) ──────────── */
+  .proj { border-left: 1px solid var(--border); padding: 2px 0 2px 16px; margin: 12px 0 12px 20px; }
+  .proj-name { color: var(--green); font-size: 14px; font-weight: 500; }
+  .proj-name::before { content: '▸ '; }
+  .proj-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.7; margin: 4px 0 6px; }
 
-  /* Project cards */
-  .project {
+  /* ── Section: site map ──────────────────────── */
+  .section { margin-top: 56px; }
+  .section-head { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+  .section-head .dollar { color: var(--green); }
+  .section-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 22px; }
+
+  .sitemap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .node-card {
+    display: block;
+    background: var(--bg-panel);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 14px 16px;
-    margin: 10px 0;
-    background: rgba(255,255,255,0.012);
-    transition: all 0.2s;
+    border-radius: 8px;
+    padding: 18px 18px 16px;
+    text-decoration: none;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
   }
-  .project:hover {
+  .node-card:hover {
     border-color: var(--green-dark);
-    box-shadow: 0 0 16px rgba(0, 255, 65, 0.06);
+    box-shadow: 0 0 18px rgba(0,255,65,0.08);
+    transform: translateY(-2px);
   }
-  .project-name {
-    color: var(--green);
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-  .project-name::before { content: '▸ '; }
-  .project-desc {
-    font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-  .project-tags { margin-top: 8px; }
+  .nc-perm { font-size: 12px; color: var(--cyan); margin-bottom: 8px; }
+  .nc-perm.symlink { color: var(--purple); }
+  .nc-perm.exec    { color: var(--yellow); }
+  .nc-name { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .nc-desc { font-size: 12px; color: var(--text-dim); line-height: 1.65; margin-bottom: 10px; min-height: 40px; }
+  .nc-tag  { font-size: 11px; color: var(--green); }
 
-  /* Highlight */
-  .hl { color: var(--green); }
-  .hl-cyan { color: var(--cyan); }
-  .hl-purple { color: var(--purple); }
-  .hl-yellow { color: var(--yellow); }
-
-  /* Loading bar */
-  .progress-bar {
-    width: 200px; height: 2px;
-    background: var(--border);
-    border-radius: 1px;
-    margin: 4px 0;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: var(--green);
-    transition: width 0.3s;
-    box-shadow: 0 0 6px var(--green);
-  }
-
-  /* Footer */
+  /* ── Footer status bar ──────────────────────── */
   .footer {
-    text-align: center;
-    margin-top: 40px;
-    font-size: 11px;
-    color: var(--text-dim);
-    opacity: 0.5;
+    text-align: center; margin-top: 52px;
+    font-size: 12px; color: var(--text-faint);
   }
+  .footer .bracket { color: var(--border-bright); }
 
-  /* Responsive */
-  @media (max-width: 700px) {
-    .banner pre { font-size: 7px; }
+  /* ── Responsive ─────────────────────────────── */
+  @media (max-width: 860px) {
+    .sitemap { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .banner pre { font-size: 7.5px; }
     .body { padding: 16px; }
-    .line { font-size: 12px; }
-    .line.prompt::before { font-size: 11px; }
+    .line { font-size: 12.5px; }
+    .title-text { display: none; }
+    .sitemap { grid-template-columns: 1fr; }
+    .nc-desc { min-height: 0; }
   }
 </style>
 </head>
@@ -357,18 +250,16 @@
 <div class="particles" id="particles"></div>
 
 <div class="main">
-  <div class="banner glitch">
-    <pre id="ascii-art"></pre>
-  </div>
+  <div class="banner"><pre id="ascii-art"></pre></div>
+  <div class="kicker"><span class="path">~/portfolio</span> — full-stack developer · knowledge graph · AI agent</div>
 
+  <!-- ══ Terminal ══ -->
   <div class="terminal">
     <div class="titlebar">
       <div class="dots">
-        <span class="dot dot-r"></span>
-        <span class="dot dot-y"></span>
-        <span class="dot dot-g"></span>
+        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
       </div>
-      <span class="title-text">alan@home — bash — 80×24</span>
+      <span class="title-text">alan@home — zsh — 120×32</span>
       <div class="title-tabs">
         <button class="tab active" data-section="about">~/about</button>
         <button class="tab" data-section="skills">~/skills</button>
@@ -376,18 +267,60 @@
         <button class="tab" data-section="contact">~/contact</button>
       </div>
     </div>
-    <div class="body" id="terminal-body">
-      <!-- Rendered by JS -->
-    </div>
+    <div class="body" id="terminal-body"><!-- rendered by JS --></div>
   </div>
 
+  <!-- ══ Site map ══ -->
+  <section class="section">
+    <div class="section-head"><span class="dollar">$</span> ls -la ~/site/</div>
+    <div class="section-sub">total 6 —— 2 个子项目 · 1 个知识库 · 7 天学习日志 · 1 个外部链接 · 1 个可执行脚本</div>
+    <div class="sitemap">
+      <a class="node-card" href="./psych-assessment/">
+        <div class="nc-perm">drwxr-xr-x&nbsp;&nbsp;./psych-assessment/</div>
+        <div class="nc-name">心理健康智能问答平台</div>
+        <div class="nc-desc">React + TypeScript，接入金蝶苍穹 AI。知识图谱驱动问答与危机预警。</div>
+        <div class="nc-tag">[ React · TS · 知识图谱 ]</div>
+      </a>
+      <a class="node-card" href="./data_analysis/">
+        <div class="nc-perm">drwxr-xr-x&nbsp;&nbsp;./data_analysis/</div>
+        <div class="nc-name">数据分析项目</div>
+        <div class="nc-desc">数据处理与可视化实践，Notebook 到可部署结果的完整链路。</div>
+        <div class="nc-tag">[ Python · Pandas · 可视化 ]</div>
+      </a>
+      <a class="node-card" href="./knowledge.html">
+        <div class="nc-perm">-rw-r--r--&nbsp;&nbsp;./knowledge.html</div>
+        <div class="nc-name">前端知识库</div>
+        <div class="nc-desc">HTML / CSS / JS 知识体系汇总页，学习过程中的完整笔记索引。</div>
+        <div class="nc-tag">[ HTML5 · CSS3 · 笔记 ]</div>
+      </a>
+      <a class="node-card" href="./day1&2.html">
+        <div class="nc-perm">-rw-r--r--&nbsp;&nbsp;./day{1..7}.html</div>
+        <div class="nc-name">7 天 HTML 学习日志</div>
+        <div class="nc-desc">从 HTML5 基础、表单、到综合实践的循序渐进记录。</div>
+        <div class="nc-tag">day1&2 · day3 · day4 · day5 · day6 · day7 →</div>
+      </a>
+      <a class="node-card" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">
+        <div class="nc-perm symlink">lrwxrwxrwx&nbsp;&nbsp;-&gt; github.com</div>
+        <div class="nc-name">@lixiaoshuai-git</div>
+        <div class="nc-desc">源码、提交记录与更多实验性项目，欢迎 Star / Fork。</div>
+        <div class="nc-tag">[ git clone ↓ ]</div>
+      </a>
+      <a class="node-card" href="#contact" id="contact-card">
+        <div class="nc-perm exec">-rwxr-xr-x&nbsp;&nbsp;./send-signal.sh</div>
+        <div class="nc-name">建立连接</div>
+        <div class="nc-desc">技术合作 · 开源贡献 · 有趣的项目——ping me。</div>
+        <div class="nc-tag">[ open to work ]</div>
+      </a>
+    </div>
+  </section>
+
   <div class="footer">
-    [ System uptime: <span id="uptime"></span> &nbsp;|&nbsp; Always building ]
+    <span class="bracket">[</span> alan@home · uptime <span id="uptime"></span> · exit 0 · always building <span class="bracket">]</span>
   </div>
 </div>
 
 <script>
-// ── ASCII Art ──
+/* ── ASCII art ─────────────────────────────── */
 const ascii = `
     █████╗ ██╗      █████╗ ███╗   ██╗
    ██╔══██╗██║     ██╔══██╗████╗  ██║
@@ -398,9 +331,9 @@ const ascii = `
 `.split('\n').slice(1, 7).join('\n');
 document.getElementById('ascii-art').textContent = ascii;
 
-// ── Particles ──
+/* ── Particles ─────────────────────────────── */
 const particles = document.getElementById('particles');
-for (let i = 0; i < 30; i++) {
+for (let i = 0; i < 26; i++) {
   const p = document.createElement('div');
   p.className = 'particle';
   p.style.left = Math.random() * 100 + '%';
@@ -411,209 +344,118 @@ for (let i = 0; i < 30; i++) {
   particles.appendChild(p);
 }
 
-// ── Sections ──
+/* ── Tab sections ──────────────────────────── */
 const sections = {
   about: `
-<div class="line prompt"><span id="about-output"></span><span class="cursor"></span></div>
-<div class="line output" style="margin-top:4px">
-<span class="hl">> whoami</span>
-</div>
-<div class="line output last">
-全栈开发者，穿梭于前端界面与后端逻辑之间。热衷用代码把想法变成现实——从知识图谱到智能对话，从企业系统到实验性项目，始终在探索技术的边界。
-
-坚信 <span class="hl-cyan">build first, talk later</span>。每个项目都是学习新东西的借口。
-</div>
-<div class="line output">
-<span class="hl">> uptime --years</span>
-</div>
-<div class="line output">
-沉浸 Web 开发多年，主攻 <span class="hl">React + TypeScript</span> 生态，后端 <span class="hl">Node.js / Python / Flask</span> 都能上手。
-数据库 <span class="hl-yellow">MySQL</span> 是常用工具，目前正在深挖 <span class="hl-purple">AI Agent & 知识图谱</span> 方向。
-</div>
-<div class="line output last">
-<span class="hl-cyan">当前状态:</span> 持续构建中... <span class="cursor" style="animation-duration:1.5s"></span>
-</div>
-`,
+<div class="line prompt"><span class="cmd" id="about-output"></span><span class="cursor"></span></div>
+<div class="line output">苑泽宇 / Alan —— 四川大学软件工程在读，全栈开发者。</div>
+<div class="line output dim">穿梭于前端界面与后端逻辑之间，热衷把想法变成现实——从知识图谱到智能对话，从企业系统到实验性项目。坚信 <span class="hl-cyan">build first, talk later</span>。</div>
+<div class="line prompt" style="margin-top:14px"><span class="cmd">cat ~/status.json</span></div>
+<div class="line output"><span class="punct">{</span>
+  <span class="key">"focus"</span>    <span class="punct">:</span> [<span class="str">"AI Agent"</span>, <span class="str">"知识图谱"</span>, <span class="str">"LLM 集成"</span>]<span class="punct">,</span>
+  <span class="key">"stack"</span>    <span class="punct">:</span> [<span class="str">"React"</span>, <span class="str">"TypeScript"</span>, <span class="str">"Node.js"</span>, <span class="str">"Python"</span>, <span class="str">"MySQL"</span>]<span class="punct">,</span>
+  <span class="key">"platform"</span> <span class="punct">:</span> <span class="str">"金蝶苍穹 Agent Studio"</span><span class="punct">,</span>
+  <span class="key">"status"</span>   <span class="punct">:</span> <span class="str">"持续构建中..."</span>
+<span class="punct">}</span></div>`,
   skills: `
-<div class="line prompt"><span id="skills-output"></span><span class="cursor"></span></div>
-<div class="line output" style="margin-top:4px">
-<span class="hl">$ lsskills --all</span>
-</div>
-<div class="line output">
-<span class="tag frontend">React</span>
-<span class="tag frontend">TypeScript</span>
-<span class="tag frontend">Vue.js</span>
-<span class="tag frontend">D3.js</span>
-<span class="tag frontend">HTML5/CSS3</span>
-</div>
-<div class="line output">
-<span class="tag backend">Node.js</span>
-<span class="tag backend">Python</span>
-<span class="tag backend">Flask</span>
-<span class="tag backend">Express</span>
-<span class="tag backend">RESTful API</span>
-</div>
-<div class="line output">
-<span class="tag db">MySQL</span>
-<span class="tag db">SQL</span>
-</div>
-<div class="line output">
-<span class="tag ai">AI Agent</span>
-<span class="tag ai">知识图谱</span>
-<span class="tag ai">NLP</span>
-<span class="tag ai">LLM 集成</span>
-</div>
-<div class="line output last">
-<span class="tag tool">Git</span>
-<span class="tag tool">Docker</span>
-<span class="tag tool">Webpack/Vite</span>
-<span class="tag tool">金蝶苍穹平台</span>
-</div>
-<div class="line output" style="color:var(--text-dim); font-size:12px;">
-<span class="hl">$</span> 共加载 <span class="hl-yellow">20</span> 个技能模块 —— 全部就绪
-</div>
-`,
+<div class="line prompt"><span class="cmd" id="skills-output"></span><span class="cursor"></span></div>
+<div class="line output"><span class="hl-cyan"># 前端</span></div>
+<div class="line output"><span class="tag frontend">React</span><span class="tag frontend">TypeScript</span><span class="tag frontend">Vue.js</span><span class="tag frontend">D3.js</span><span class="tag frontend">HTML5/CSS3</span></div>
+<div class="line output"><span class="hl-cyan"># 后端</span></div>
+<div class="line output"><span class="tag backend">Node.js</span><span class="tag backend">Python</span><span class="tag backend">Flask</span><span class="tag backend">Express</span><span class="tag backend">RESTful API</span></div>
+<div class="line output"><span class="hl-cyan"># 数据</span></div>
+<div class="line output"><span class="tag db">MySQL</span><span class="tag db">SQL</span></div>
+<div class="line output"><span class="hl-cyan"># AI</span></div>
+<div class="line output"><span class="tag ai">AI Agent</span><span class="tag ai">知识图谱</span><span class="tag ai">NLP</span><span class="tag ai">LLM 集成</span></div>
+<div class="line output"><span class="hl-cyan"># 工具链</span></div>
+<div class="line output"><span class="tag tool">Git</span><span class="tag tool">Docker</span><span class="tag tool">Vite</span><span class="tag tool">金蝶苍穹平台</span></div>
+<div class="line output dim" style="font-size:12px;margin-top:6px"><span class="hl">$</span> 共加载 <span class="hl-yellow">20</span> 个技能模块 —— 全部就绪</div>`,
   projects: `
-<div class="line prompt"><span id="projects-output"></span><span class="cursor"></span></div>
-<div class="line output" style="margin-top:4px">
-<span class="hl">$ cat /var/projects/*.md</span>
+<div class="line prompt"><span class="cmd" id="projects-output"></span><span class="cursor"></span></div>
+<div class="proj">
+  <div class="proj-name">心理健康智能问答平台</div>
+  <div class="proj-desc">基于 React + TypeScript 构建的大学生心理智能问答系统，集成金蝶苍穹 AI 平台能力，包含知识图谱驱动的智能问答、危机预警等核心模块。</div>
+  <div><span class="tag frontend">React</span><span class="tag frontend">TypeScript</span><span class="tag ai">知识图谱</span><span class="tag ai">AI Agent</span><span class="tag tool">金蝶苍穹</span></div>
 </div>
-<div class="line output last" style="border-left-color:transparent; padding-left:0; margin-left:0;">
-
-<div class="project">
-  <div class="project-name">心理健康智能问答平台</div>
-  <div class="project-desc">
-    基于 React + TypeScript 构建的大学生心理智能问答系统，集成金蝶苍穹 AI 平台能力。
-    包含知识图谱驱动的智能问答、危机预警等核心模块。
-  </div>
-  <div class="project-tags">
-    <span class="tag frontend">React</span>
-    <span class="tag frontend">TypeScript</span>
-    <span class="tag ai">知识图谱</span>
-    <span class="tag ai">AI Agent</span>
-    <span class="tag tool">金蝶苍穹</span>
-  </div>
+<div class="proj">
+  <div class="proj-name">HR 管理系统</div>
+  <div class="proj-desc">全栈企业人事管理系统，Node.js + MySQL，覆盖员工管理、部门架构、考勤统计、薪资核算等 11 张数据库表的完整业务。</div>
+  <div><span class="tag backend">Node.js</span><span class="tag db">MySQL</span><span class="tag frontend">Vue.js</span><span class="tag backend">RESTful API</span></div>
 </div>
-
-<div class="project">
-  <div class="project-name">HR管理系统</div>
-  <div class="project-desc">
-    全栈企业人事管理系统，基于 Node.js + MySQL，包含员工管理、部门架构、
-    考勤统计、薪资核算等 11 张数据库表的完整业务。
-  </div>
-  <div class="project-tags">
-    <span class="tag backend">Node.js</span>
-    <span class="tag db">MySQL</span>
-    <span class="tag frontend">Vue.js</span>
-    <span class="tag backend">RESTful API</span>
-  </div>
-</div>
-
-<div class="project">
-  <div class="project-name">知识图谱研究项目</div>
-  <div class="project-desc">
-    探索知识图谱的构建与应用，涵盖实体关系抽取、图谱可视化（D3.js）、
-    LLM 驱动的知识推理等方向。
-  </div>
-  <div class="project-tags">
-    <span class="tag ai">知识图谱</span>
-    <span class="tag frontend">D3.js</span>
-    <span class="tag ai">LLM</span>
-    <span class="tag backend">Python</span>
-  </div>
-</div>
-
-</div>
-`,
+<div class="proj">
+  <div class="proj-name">知识图谱研究项目</div>
+  <div class="proj-desc">探索知识图谱的构建与应用，涵盖实体关系抽取、D3.js 图谱可视化、LLM 驱动的知识推理等方向。</div>
+  <div><span class="tag ai">知识图谱</span><span class="tag frontend">D3.js</span><span class="tag ai">LLM</span><span class="tag backend">Python</span></div>
+</div>`,
   contact: `
-<div class="line prompt"><span id="contact-output"></span><span class="cursor"></span></div>
-<div class="line output" style="margin-top:4px">
-<span class="hl">$ ./send-signal.sh</span>
-</div>
-<div class="line output">
-<span class="hl-cyan">Signal broadcasting on following channels:</span>
-</div>
-<div class="line output">
-  <span style="color:var(--text-dim)">▸</span> GitHub: <span class="hl" style="text-decoration:underline;cursor:pointer" onclick="navigator.clipboard.writeText('github.com/alan')">github.com/alan</span>
-  <span style="font-size:10px;color:var(--text-dim)">[点击复制]</span>
-</div>
-<div class="line output">
-  <span style="color:var(--text-dim)">▸</span> Email: <span class="hl-cyan">alan@dev.me</span>
-</div>
-<div class="line output last">
-  <span style="color:var(--text-dim)">▸</span> Blog: <span class="hl-purple">blog.alan.dev</span>
-</div>
-<div class="line output" style="margin-top:16px;border-left-color:transparent; padding-left:0; margin-left:0;">
-<span style="color:var(--text-dim); font-size:12px;">
-┌─────────────────────────────────────────┐
-│  <span class="hl">Open to:</span> 技术合作 · 开源贡献 · 有趣的项目   │
-│  <span class="hl-cyan">Ping me</span> if you're building something cool │
-└─────────────────────────────────────────┘
-</span>
-</div>
-`
+<div class="line prompt"><span class="cmd" id="contact-output"></span><span class="cursor"></span></div>
+<div class="line output"><span class="hl-cyan">Signal broadcasting on following channels:</span></div>
+<div class="line output">  <span class="punct">▸</span> GitHub&nbsp;&nbsp;: <a href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener" style="color:var(--green)">github.com/lixiaoshuai-git</a></div>
+<div class="line output">  <span class="punct">▸</span> 主页&nbsp;&nbsp;&nbsp;&nbsp;: <a href="https://lixiaoshuai-git.github.io" target="_blank" rel="noopener" style="color:var(--cyan)">lixiaoshuai-git.github.io</a></div>
+<div class="line output" style="margin-top:18px"><span class="punct">┌──────────────────────────────────────────┐
+│  <span class="hl">Open to:</span> 技术合作 · 开源贡献 · 有趣的项目    │
+│  <span class="hl-cyan">Ping me</span> if you're building something cool  │
+└──────────────────────────────────────────┘</span></div>`
 };
 
-// ── Typing effect ──
+/* ── Typing effect ─────────────────────────── */
 function typeText(el, text, speed, callback) {
   let i = 0;
   const interval = setInterval(() => {
-    if (i < text.length) {
-      el.textContent = text.substring(0, i + 1);
-      i++;
-    } else {
+    if (i < text.length) { el.textContent = text.substring(0, i + 1); i++; }
+    else {
       clearInterval(interval);
       const cursor = el.parentElement.querySelector('.cursor');
-      if (cursor) {
-        cursor.style.display = 'none';
-      }
+      if (cursor) cursor.style.display = 'none';
       if (callback) callback();
     }
   }, speed);
 }
 
-// ── Render section ──
+/* ── Render section ────────────────────────── */
 function renderSection(name) {
   const body = document.getElementById('terminal-body');
-  const content = sections[name];
-  body.innerHTML = content;
-
-  // animate the prompt command
+  body.innerHTML = sections[name];
   const outputSpan = document.getElementById(name + '-output');
   if (outputSpan) {
     const commands = {
-      about: 'cat ~/about.md',
-      skills: 'ls -la ~/skills/',
-      projects: 'ls ~/projects/',
-      contact: 'ping alan --contact'
+      about: 'whoami', skills: 'ls -la ~/skills/',
+      projects: 'ls ~/projects/', contact: './send-signal.sh'
     };
     setTimeout(() => {
-      typeText(outputSpan, commands[name], 40, () => {
-        // remove cursor after typing
-        const cursors = body.querySelectorAll('.cursor');
-        cursors.forEach(c => c.style.display = 'none');
+      typeText(outputSpan, commands[name], 60, () => {
+        body.querySelectorAll('.cursor').forEach(c => c.style.display = 'none');
       });
-    }, 100);
+    }, 120);
   }
 }
 
-// ── Tab switching ──
+/* ── Tab switching ─────────────────────────── */
+function activateTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.tab[data-section="${name}"]`);
+  if (tab) tab.classList.add('active');
+  renderSection(name);
+}
 document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    renderSection(tab.dataset.section);
-  });
+  tab.addEventListener('click', () => activateTab(tab.dataset.section));
 });
 
-// ── Uptime ──
+/* contact card scrolls + switches tab */
+document.getElementById('contact-card').addEventListener('click', (e) => {
+  e.preventDefault();
+  activateTab('contact');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* ── Uptime ────────────────────────────────── */
 document.getElementById('uptime').textContent =
   Math.floor((Date.now() - new Date('2024-01-01').getTime()) / 86400000) + ' days';
 
-// ── Init ──
+/* ── Init ──────────────────────────────────── */
 renderSection('about');
 
-// ── Random flicker on terminal ──
+/* ── Random flicker ────────────────────────── */
 const terminal = document.querySelector('.terminal');
 setInterval(() => {
   if (Math.random() < 0.03) {
@@ -622,13 +464,10 @@ setInterval(() => {
   }
 }, 2000);
 
-// ── Keyboard shortcuts ──
+/* ── Keyboard shortcuts 1-4 ────────────────── */
 document.addEventListener('keydown', (e) => {
   const map = { '1': 'about', '2': 'skills', '3': 'projects', '4': 'contact' };
-  if (map[e.key]) {
-    const tab = document.querySelector(`.tab[data-section="${map[e.key]}"]`);
-    if (tab) tab.click();
-  }
+  if (map[e.key]) activateTab(map[e.key]);
 });
 </script>
 </body>
