@@ -30,9 +30,9 @@ lixiaoshuai-git.github.io/
 │   ├── index.html              # Vite 源码入口，仅 `npm run dev` 使用
 │   ├── src/                    # 源码
 │   └── dist/                   # 构建产物，Pages 实际部署目录（故意提交）
-├── assets/                     # 备用图片资源（当前未被页面引用）
 ├── day1&2.html … day7.html     # Day 1-7 学习日志
 ├── day6.css                    # Day 6 配套样式
+├── *.png / *.jpg               # 站点图片资源（校徽、项目图标、配图等）
 └── .gitignore
 ```
 
