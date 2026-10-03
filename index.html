@@ -2,473 +2,780 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alan | ~/terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>苑泽宇 Alan · 全栈开发者 / AI Agent 与知识图谱</title>
+<meta name="description" content="苑泽宇（Alan），四川大学软件工程在读，全栈开发者。专注于 AI Agent、知识图谱与 LLM 集成，作品涵盖学生心理健康测评系统、心理危机预警监测平台与心理健康知识图谱。">
+<meta name="author" content="苑泽宇 Alan">
+<meta name="theme-color" content="#05060c">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="苑泽宇 Alan · 全栈开发者 / AI Agent 与知识图谱">
+<meta property="og:description" content="四川大学软件工程在读 · 全栈开发者 · 用知识图谱与 AI 做心理健康方向的数字化产品。">
+<meta property="og:url" content="https://lixiaoshuai-git.github.io">
+<link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' font-weight='700' font-family='sans-serif' fill='%23050710' text-anchor='middle'%3E%E8%8B%91%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>document.documentElement.classList.add('js');</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap');
+/* ═══════════ Tokens ═══════════ */
+:root{
+  --bg:#05060c;
+  --text:#e9edf7;
+  --muted:#98a3bb;
+  --dim:#6f7a94;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.15);
+  --glass:rgba(255,255,255,.045);
+  --glass-2:rgba(255,255,255,.075);
+  --indigo:#7c9cff;
+  --cyan:#38e0f0;
+  --violet:#b79dff;
+  --mint:#5eead4;
+  --grad:linear-gradient(100deg,#9db4ff 0%,#5eead4 48%,#c4b5fd 100%);
+  --grad-btn:linear-gradient(115deg,#6366f1,#22d3ee);
+  --r-lg:22px; --r-md:16px; --r-sm:11px;
+  --maxw:1140px;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  line-height:1.6;letter-spacing:.005em;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:rgba(124,156,255,.35);color:#fff}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px}
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 24px}
 
-  :root {
-    --green: #00ff41;
-    --green-dim: #00cc33;
-    --green-dark: #003b00;
-    --cyan: #00e5ff;
-    --purple: #bb86fc;
-    --red: #ff5555;
-    --yellow: #f1fa8c;
-    --bg: #0a0a0a;
-    --bg-panel: #0d1117;
-    --bg-titlebar: #161b22;
-    --text: #c9d1d9;
-    --text-dim: #8b949e;
-    --text-faint: #6e7681;
-    --border: #21262d;
-    --border-bright: #3a4149;
-  }
+/* ═══════════ Ambient background ═══════════ */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;opacity:.5;will-change:transform}
+.blob.b1{width:760px;height:760px;top:-320px;left:-180px;background:radial-gradient(circle,rgba(99,102,241,.55),rgba(99,102,241,0) 66%);animation:drift1 26s ease-in-out infinite alternate}
+.blob.b2{width:680px;height:680px;top:-190px;right:-220px;background:radial-gradient(circle,rgba(34,211,238,.42),rgba(34,211,238,0) 66%);animation:drift2 32s ease-in-out infinite alternate}
+.blob.b3{width:820px;height:820px;bottom:-420px;left:32%;background:radial-gradient(circle,rgba(167,139,250,.32),rgba(167,139,250,0) 68%);animation:drift3 38s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate3d(90px,60px,0) scale(1.12)}}
+@keyframes drift2{to{transform:translate3d(-80px,50px,0) scale(1.08)}}
+@keyframes drift3{to{transform:translate3d(60px,-70px,0) scale(1.14)}}
+.gridlines{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:58px 58px;
+  -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 5%,transparent 78%);
+  mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 5%,transparent 78%);
+}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse 120% 90% at 50% 42%,transparent 42%,rgba(2,3,8,.72) 100%)}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ═══════════ Nav ═══════════ */
+.nav{position:sticky;top:0;z-index:60;background:rgba(5,6,12,.55);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid transparent;transition:background .3s,border-color .3s}
+.nav.scrolled{background:rgba(5,6,12,.86);border-bottom-color:var(--line)}
+.nav-inner{display:flex;align-items:center;gap:20px;height:70px}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--grad-btn);display:grid;place-items:center;font-weight:800;font-size:16px;color:#04070f;box-shadow:0 8px 22px -8px rgba(99,102,241,.9)}
+.brand-txt strong{display:block;font-size:14.5px;font-weight:700;letter-spacing:.01em;line-height:1.25}
+.brand-txt span{display:block;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.nav-links{display:flex;align-items:center;gap:2px;margin-left:auto}
+.nav-links a{padding:8px 14px;border-radius:10px;font-size:14px;color:var(--muted);transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.055)}
+.nav-links a.active{color:#fff;background:rgba(124,156,255,.14);box-shadow:inset 0 0 0 1px rgba(124,156,255,.28)}
+.nav-gh{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:600;background:var(--glass);border:1px solid var(--line-2);color:var(--text);transition:.22s}
+.nav-gh:hover{background:var(--glass-2);border-color:rgba(124,156,255,.5);transform:translateY(-1px)}
+.burger{display:none;margin-left:auto;width:42px;height:42px;border-radius:12px;background:var(--glass);border:1px solid var(--line);color:var(--text);cursor:pointer;align-items:center;justify-content:center}
+.burger span{display:block;width:17px;height:1.6px;background:currentColor;position:relative;transition:.25s}
+.burger span::before,.burger span::after{content:'';position:absolute;left:0;width:17px;height:1.6px;background:currentColor;transition:.25s}
+.burger span::before{top:-5.5px}.burger span::after{top:5.5px}
 
-  html { scroll-behavior: smooth; }
+/* ═══════════ Hero ═══════════ */
+.hero{padding:clamp(60px,9vw,108px) 0 clamp(56px,7vw,88px);position:relative}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(36px,5vw,64px);align-items:center}
+.pill{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:13px;color:#c2cbdd;backdrop-filter:blur(8px)}
+.live{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.65);animation:ping 2.4s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+h1{margin-top:22px;font-size:clamp(38px,6.2vw,64px);font-weight:800;line-height:1.04;letter-spacing:-.035em}
+h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.role{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px;color:#c6cfe2}
+.role i{width:4px;height:4px;border-radius:50%;background:var(--dim);font-style:normal}
+.role b{font-weight:600;color:#fff}
+.tagline{margin-top:20px;max-width:54ch;font-size:15.5px;line-height:1.9;color:var(--muted)}
+.tagline em{font-style:normal;color:#dfe6f5}
+.cta{display:flex;flex-wrap:wrap;gap:13px;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:13px;font-size:14.5px;font-weight:600;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,background .25s,border-color .25s}
+.btn-primary{background:var(--grad-btn);color:#04070f;box-shadow:0 14px 34px -12px rgba(56,189,248,.85)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 20px 42px -12px rgba(56,189,248,.95)}
+.btn-ghost{background:var(--glass);border:1px solid var(--line-2);color:var(--text);backdrop-filter:blur(8px)}
+.btn-ghost:hover{transform:translateY(-2px);background:var(--glass-2);border-color:rgba(124,156,255,.55)}
+.stats{display:flex;flex-wrap:wrap;gap:clamp(22px,4vw,44px);margin-top:46px;padding-top:26px;border-top:1px solid var(--line)}
+.stat b{display:block;font-size:clamp(22px,3vw,27px);font-weight:800;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat span{font-size:12.5px;color:var(--dim);letter-spacing:.02em}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-    cursor: default;
-  }
+/* code card */
+.code-card{position:relative;border-radius:var(--r-lg);background:linear-gradient(170deg,rgba(255,255,255,.075),rgba(255,255,255,.018));border:1px solid var(--line);box-shadow:0 40px 90px -40px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:hidden}
+.code-card::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(124,156,255,.55),transparent 42%,rgba(94,234,212,.4));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none}
+.code-head{display:flex;align-items:center;gap:9px;padding:13px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.tl{display:flex;gap:7px;margin-right:4px}
+.tl i{width:10px;height:10px;border-radius:50%;display:block}
+.tl i:nth-child(1){background:#ff5f57}.tl i:nth-child(2){background:#febc2e}.tl i:nth-child(3){background:#28c840}
+.code-body{padding:20px 22px 22px;font-family:var(--mono);font-size:12.6px;line-height:2.05;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.k{color:#7dd3fc}.s{color:#a5f3d0}.p{color:#5c6683}.c{color:#7c8aa5}
+.code-foot{border-top:1px solid var(--line);padding:12px 20px;font-family:var(--mono);font-size:12px;color:var(--mint);display:flex;align-items:center;gap:8px;min-height:44px}
+.caret{display:inline-block;width:7px;height:14px;background:var(--mint);vertical-align:-2px;animation:blink 1.05s step-end infinite}
+@keyframes blink{50%{opacity:0}}
 
-  /* ── CRT layers ─────────────────────────────── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
-    );
-    pointer-events: none; z-index: 9999;
-  }
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.55) 100%);
-    pointer-events: none; z-index: 9998;
-  }
+/* ═══════════ Sections ═══════════ */
+.sec{padding:clamp(56px,7.5vw,96px) 0;position:relative}
+.sec-head{max-width:760px;margin-bottom:clamp(30px,4vw,46px)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:#8b98b8}
+.eyebrow::before{content:'';width:26px;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+.sec-head h2{margin-top:14px;font-size:clamp(26px,3.6vw,38px);font-weight:800;letter-spacing:-.028em;line-height:1.18}
+.sec-head p{margin-top:14px;font-size:15px;line-height:1.85;color:var(--muted)}
+.grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-  /* ── Particles ──────────────────────────────── */
-  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-  .particle {
-    position: absolute; background: var(--green); opacity: 0;
-    animation: floatUp 8s infinite;
-  }
-  @keyframes floatUp {
-    0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
-    10%  { opacity: 0.55; }
-    90%  { opacity: 0.1; }
-    100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
-  }
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.js .reveal.in{opacity:1;transform:none}
 
-  /* ── Layout ─────────────────────────────────── */
-  .main {
-    position: relative; z-index: 1;
-    width: 92vw; max-width: 1080px;
-    margin: 0 auto;
-    padding: 48px 0 56px;
-  }
+/* glass panel */
+.panel{border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 
-  /* ── Hero: ASCII + kicker ───────────────────── */
-  .banner { text-align: center; margin-bottom: 14px; }
-  .banner pre {
-    font-size: 11px; line-height: 1.15;
-    color: var(--green);
-    text-shadow: 0 0 8px var(--green), 0 0 24px var(--green-dark);
-    animation: flickerText 5s infinite;
-    display: inline-block; text-align: left;
-  }
-  @keyframes flickerText {
-    0%,100% { opacity: 1; } 93% { opacity: 1; }
-    94% { opacity: 0.85; } 95% { opacity: 1; }
-    96% { opacity: 0.9; }  97% { opacity: 1; }
-  }
-  .kicker {
-    text-align: center;
-    font-size: 13px; color: var(--text-dim);
-    margin-bottom: 34px; letter-spacing: 0.02em;
-  }
-  .kicker .path { color: var(--green-dim); }
+/* ═══════════ About ═══════════ */
+.about-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:clamp(28px,4vw,48px);align-items:start}
+.prose p{font-size:15.4px;line-height:1.95;color:#b9c3d6}
+.prose p+p{margin-top:20px}
+.prose strong{color:#fff;font-weight:600}
+.prose .hl{color:var(--mint);font-weight:500}
+.info{padding:10px}
+.info-row{display:flex;gap:14px;padding:15px 16px;border-radius:var(--r-md);transition:background .22s}
+.info-row+.info-row{border-top:1px solid rgba(255,255,255,.05)}
+.info-row:hover{background:rgba(255,255,255,.04)}
+.ico{width:36px;height:36px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;background:rgba(124,156,255,.12);color:#a6baff;border:1px solid rgba(124,156,255,.18)}
+.ico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.info-row .k{font-size:12px;color:var(--dim);letter-spacing:.03em}
+.info-row .v{margin-top:3px;font-size:14.5px;font-weight:600;color:#eef2fb}
 
-  /* ── Terminal window ────────────────────────── */
-  .terminal {
-    background: rgba(13,17,23,0.94);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow:
-      0 0 48px rgba(0,255,65,0.06),
-      0 12px 40px rgba(0,0,0,0.6),
-      inset 0 0 60px rgba(0,0,0,0.3);
-    backdrop-filter: blur(10px);
-    position: relative;
-  }
-  .terminal::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(0,255,65,0.015) 0%, transparent 50%, rgba(0,255,65,0.005) 100%);
-    pointer-events: none; z-index: 2;
-  }
+/* ═══════════ Skills ═══════════ */
+.skills{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.skill{padding:24px 24px 22px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s}
+.skill:hover{transform:translateY(-4px);border-color:var(--line-2);background:var(--glass-2)}
+.skill-top{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.skill-top .ico{width:38px;height:38px;background:rgba(56,224,240,.1);color:#7de5f2;border-color:rgba(56,224,240,.2)}
+.skill h3{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.skill .n{display:block;font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.chip{padding:5px 11px;border-radius:8px;font-size:12.3px;font-weight:500;color:#c8d2e6;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);transition:.2s}
+.chip:hover{color:#fff;background:rgba(124,156,255,.16);border-color:rgba(124,156,255,.4)}
+.skill-note{margin-top:22px;font-family:var(--mono);font-size:12.3px;color:var(--dim);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.skill-note b{color:var(--mint);font-weight:500}
 
-  .titlebar {
-    background: var(--bg-titlebar);
-    border-bottom: 1px solid var(--border);
-    padding: 11px 16px;
-    display: flex; align-items: center; gap: 8px;
-    user-select: none;
-  }
-  .dots { display: flex; gap: 8px; margin-right: 10px; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot-r { background: #ff5f56; } .dot-y { background: #ffbd2e; } .dot-g { background: #27c93f; }
-  .title-text { font-size: 12px; color: var(--text-dim); flex: 1; }
-  .title-tabs { display: flex; gap: 4px; }
-  .tab {
-    padding: 5px 13px; font-size: 11px;
-    border-radius: 6px; cursor: pointer;
-    color: var(--text-dim);
-    border: 1px solid transparent;
-    transition: all 0.18s;
-    background: transparent; font-family: inherit;
-  }
-  .tab.active {
-    color: var(--green);
-    background: var(--bg-panel);
-    border-color: rgba(0,204,51,0.5);
-    text-shadow: 0 0 6px rgba(0,255,65,0.35);
-  }
-  .tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+/* ═══════════ Projects ═══════════ */
+.projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+.card{position:relative;display:flex;flex-direction:column;padding:28px 26px 24px;border-radius:var(--r-lg);background:linear-gradient(175deg,rgba(255,255,255,.062),rgba(255,255,255,.018));border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),border-color .32s,box-shadow .32s}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(360px circle at var(--mx,50%) var(--my,0%),rgba(124,156,255,.17),transparent 68%);opacity:0;transition:opacity .35s;pointer-events:none}
+.card:hover{transform:translateY(-5px);border-color:var(--line-2);box-shadow:0 34px 70px -34px rgba(0,0,0,.95),0 0 0 1px rgba(124,156,255,.12)}
+.card:hover::before{opacity:1}
+.card .top-line{position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);opacity:.85}
+.card-head{display:flex;align-items:flex-start;gap:14px;position:relative}
+.card-head .ico{width:44px;height:44px;border-radius:13px}
+.card-head h3{font-size:18px;font-weight:700;letter-spacing:-.015em;line-height:1.35}
+.badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 9px;border-radius:999px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#8ef2c8;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.24)}
+.badge i{width:5px;height:5px;border-radius:50%;background:#34d399;display:block}
+.card p{margin-top:15px;font-size:13.9px;line-height:1.85;color:var(--muted);position:relative}
+.card .chips{margin-top:18px}
+.card-link{margin-top:auto;padding-top:22px}
+.card-link a{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#a8bcff;transition:gap .25s,color .2s}
+.card-link a:hover{gap:12px;color:#c9d5ff}
+.card-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-  .body {
-    position: relative; z-index: 1;
-    padding: 24px 28px 26px;
-    min-height: 380px;
-  }
+.more{margin-top:26px;padding:8px 10px}
+.more-title{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:#8b98b8}
+.more-row{display:grid;grid-template-columns:200px 1fr auto;gap:20px;align-items:center;padding:18px 16px;border-radius:var(--r-md);transition:background .22s}
+.more-row+.more-row{border-top:1px solid rgba(255,255,255,.05)}
+.more-row:hover{background:rgba(255,255,255,.04)}
+.more-row h4{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.more-row .sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:4px}
+.more-row p{font-size:13.4px;line-height:1.8;color:var(--muted)}
+.mini-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:292px}
+.mini{padding:3px 9px;border-radius:7px;font-family:var(--mono);font-size:10.8px;color:#a9b6d0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);white-space:nowrap}
 
-  /* ── Terminal lines ─────────────────────────── */
-  .line { margin-bottom: 8px; line-height: 1.75; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
-  .line.prompt { display: flex; gap: 10px; align-items: baseline; }
-  .line.prompt::before {
-    content: 'alan@home:~$';
-    color: var(--cyan); white-space: nowrap; font-size: 13px;
-  }
-  .line.prompt .cmd { color: var(--green); font-weight: 500; }
-  .line.output { padding-left: 20px; color: var(--text); }
-  .line.output.dim { color: var(--text-dim); }
+/* ═══════════ Timeline ═══════════ */
+.timeline{position:relative;padding-left:34px}
+.timeline::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:1px;background:linear-gradient(180deg,rgba(124,156,255,.75),rgba(94,234,212,.45) 55%,transparent)}
+.tl-item{position:relative;padding-bottom:14px}
+.tl-item::before{content:'';position:absolute;left:-34px;top:24px;width:19px;height:19px;border-radius:50%;background:rgba(5,6,12,1);border:1px solid rgba(124,156,255,.5);box-shadow:0 0 0 4px rgba(124,156,255,.09)}
+.tl-item::after{content:'';position:absolute;left:-29px;top:29px;width:9px;height:9px;border-radius:50%;background:var(--grad-btn);transition:transform .3s}
+.tl-item:hover::after{transform:scale(1.28)}
+.tl-card{display:grid;grid-template-columns:112px 1fr auto;gap:22px;align-items:center;padding:20px 24px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);transition:transform .28s cubic-bezier(.2,.8,.2,1),border-color .28s,background .28s}
+.tl-card:hover{transform:translateX(6px);border-color:var(--line-2);background:var(--glass-2)}
+.tl-day{font-family:var(--mono);font-size:12.5px;font-weight:500;color:#a8bcff}
+.tl-card h4{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.tl-card p{margin-top:6px;font-size:13.2px;line-height:1.75;color:var(--muted)}
+.tl-go{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color .2s,gap .25s}
+.tl-card:hover .tl-go{color:#a8bcff;gap:11px}
+.tl-go svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-  .cursor {
-    display: inline-block; width: 8px; height: 18px;
-    background: var(--green); vertical-align: text-bottom;
-    animation: blink 1s step-end infinite; margin-left: 2px;
-  }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+/* ═══════════ Contact ═══════════ */
+.contact{padding:clamp(38px,5vw,58px) clamp(26px,4vw,54px);border-radius:26px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(160deg,rgba(124,156,255,.13),rgba(94,234,212,.07) 55%,rgba(255,255,255,.02));border:1px solid var(--line-2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 50px 100px -50px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.09)}
+.contact::before{content:'';position:absolute;width:560px;height:560px;top:-360px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(124,156,255,.34),transparent 66%);pointer-events:none}
+.contact h2{position:relative;font-size:clamp(25px,3.6vw,37px);font-weight:800;letter-spacing:-.03em;line-height:1.2}
+.contact>p{position:relative;margin:18px auto 0;max-width:52ch;font-size:15.2px;line-height:1.85;color:#c4cee0}
+.contact .cta{justify-content:center;margin-top:32px}
+.open{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:30px}
+.open span{padding:7px 15px;border-radius:999px;font-size:12.8px;color:#cbd5e8;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.links{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 34px;margin-top:30px;padding-top:26px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12.8px}
+.links a{display:inline-flex;align-items:center;gap:9px;color:var(--muted);transition:color .2s}
+.links a:hover{color:var(--mint)}
+.links svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-  /* ── Syntax highlight ───────────────────────── */
-  .hl       { color: var(--green); }
-  .hl-cyan  { color: var(--cyan); }
-  .hl-purple{ color: var(--purple); }
-  .hl-yellow{ color: var(--yellow); }
-  .hl-red   { color: var(--red); }
-  .key   { color: var(--cyan); }
-  .str   { color: var(--green); }
-  .punct { color: var(--text-faint); }
+/* ═══════════ Footer ═══════════ */
+.footer{margin-top:clamp(50px,6vw,80px);padding:30px 0 40px;border-top:1px solid var(--line)}
+.foot-inner{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;font-size:13px;color:var(--dim)}
+.foot-brand{display:flex;align-items:center;gap:11px}
+.foot-brand .mark{width:30px;height:30px;border-radius:9px;font-size:13px;box-shadow:none}
+.foot-brand strong{color:#cbd5e8;font-weight:600;font-size:13.5px}
+.foot-brand span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em}
+.foot-note{font-family:var(--mono);font-size:11.8px}
+.foot-note b{color:var(--mint);font-weight:500}
 
-  /* ── Tags ───────────────────────────────────── */
-  .tag {
-    display: inline-block; padding: 2px 8px; margin: 2px 4px 2px 0;
-    font-size: 11px; border-radius: 3px; border: 1px solid;
-  }
-  .tag.frontend { color: #61dafb; border-color: rgba(97,218,251,0.3);  background: rgba(97,218,251,0.06); }
-  .tag.backend  { color: #68a063; border-color: rgba(104,160,99,0.3);  background: rgba(104,160,99,0.06); }
-  .tag.ai       { color: var(--purple); border-color: rgba(187,134,252,0.3); background: rgba(187,134,252,0.06); }
-  .tag.db       { color: var(--yellow); border-color: rgba(241,250,140,0.3); background: rgba(241,250,140,0.06); }
-  .tag.tool     { color: var(--cyan); border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.06); }
+/* ═══════════ To top ═══════════ */
+.totop{position:fixed;right:22px;bottom:22px;z-index:70;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(12,15,26,.8);border:1px solid var(--line-2);color:var(--text);cursor:pointer;backdrop-filter:blur(12px);opacity:0;visibility:hidden;transform:translateY(12px);transition:.3s}
+.totop.show{opacity:1;visibility:visible;transform:none}
+.totop:hover{border-color:rgba(124,156,255,.6);background:rgba(20,24,40,.9)}
+.totop svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.skip{position:absolute;left:-9999px;top:0;z-index:99;padding:10px 16px;border-radius:0 0 12px 0;background:#101524;color:#fff;font-size:13px}
+.skip:focus{left:0}
 
-  /* ── Project entries (in terminal) ──────────── */
-  .proj { border-left: 1px solid var(--border); padding: 2px 0 2px 16px; margin: 12px 0 12px 20px; }
-  .proj-name { color: var(--green); font-size: 14px; font-weight: 500; }
-  .proj-name::before { content: '▸ '; }
-  .proj-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.7; margin: 4px 0 6px; }
+/* ═══════════ Responsive ═══════════ */
+@media (max-width:1000px){
+  .hero-grid{grid-template-columns:1fr;gap:42px}
+  .code-card{max-width:560px}
+  .about-grid{grid-template-columns:1fr;gap:32px}
+}
+@media (max-width:860px){
+  .nav-links{position:fixed;left:12px;right:12px;top:74px;flex-direction:column;align-items:stretch;gap:4px;padding:12px;border-radius:18px;background:rgba(9,11,20,.96);border:1px solid var(--line-2);backdrop-filter:blur(20px);box-shadow:0 30px 60px -20px rgba(0,0,0,.9);opacity:0;visibility:hidden;transform:translateY(-10px);transition:.26s}
+  .nav-links.open{opacity:1;visibility:visible;transform:none}
+  .nav-links a{padding:12px 14px;font-size:15px}
+  .nav-gh{display:none}
+  .burger{display:flex}
+  .more-row{grid-template-columns:1fr;gap:10px}
+  .mini-chips{justify-content:flex-start;max-width:none}
+  .tl-card{grid-template-columns:1fr;gap:12px}
+  .tl-go{justify-self:start}
+}
+@media (max-width:560px){
+  .wrap{padding:0 18px}
+  .stats{gap:20px 26px}
+  .stat b{font-size:21px}
+  .card,.skill{padding:22px 20px}
+  .code-body{font-size:11.8px;padding:16px 16px 18px}
+  .timeline{padding-left:26px}
+  .timeline::before{left:7px}
+  .tl-item::before{left:-26px;top:20px;width:15px;height:15px}
+  .tl-item::after{left:-22px;top:24px;width:7px;height:7px}
+  .tl-card{padding:18px}
+  .contact{padding:34px 20px}
+  .totop{right:14px;bottom:14px;width:42px;height:42px}
+}
 
-  /* ── Section: site map ──────────────────────── */
-  .section { margin-top: 56px; }
-  .section-head { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
-  .section-head .dollar { color: var(--green); }
-  .section-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 22px; }
-
-  .sitemap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .node-card {
-    display: block;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px 18px 16px;
-    text-decoration: none;
-    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-  }
-  .node-card:hover {
-    border-color: var(--green-dark);
-    box-shadow: 0 0 18px rgba(0,255,65,0.08);
-    transform: translateY(-2px);
-  }
-  .nc-perm { font-size: 12px; color: var(--cyan); margin-bottom: 8px; }
-  .nc-perm.symlink { color: var(--purple); }
-  .nc-perm.exec    { color: var(--yellow); }
-  .nc-name { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-  .nc-desc { font-size: 12px; color: var(--text-dim); line-height: 1.65; margin-bottom: 10px; min-height: 40px; }
-  .nc-tag  { font-size: 11px; color: var(--green); }
-
-  /* ── Footer status bar ──────────────────────── */
-  .footer {
-    text-align: center; margin-top: 52px;
-    font-size: 12px; color: var(--text-faint);
-  }
-  .footer .bracket { color: var(--border-bright); }
-
-  /* ── Responsive ─────────────────────────────── */
-  @media (max-width: 860px) {
-    .sitemap { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 640px) {
-    .banner pre { font-size: 7.5px; }
-    .body { padding: 16px; }
-    .line { font-size: 12.5px; }
-    .title-text { display: none; }
-    .sitemap { grid-template-columns: 1fr; }
-    .nc-desc { min-height: 0; }
-  }
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  html{scroll-behavior:auto}
+  .js .reveal{opacity:1;transform:none}
+}
 </style>
 </head>
 <body>
 
-<div class="particles" id="particles"></div>
+<div class="bg" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="gridlines"></div>
+  <div class="vignette"></div>
+</div>
 
-<div class="main">
-  <div class="banner"><pre id="ascii-art"></pre></div>
-  <div class="kicker"><span class="path">~/portfolio</span> — full-stack developer · knowledge graph · AI agent</div>
+<a class="skip" href="#main">跳到主要内容</a>
 
-  <!-- ══ Terminal ══ -->
-  <div class="terminal">
-    <div class="titlebar">
-      <div class="dots">
-        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-      </div>
-      <span class="title-text">alan@home — zsh — 120×32</span>
-      <div class="title-tabs">
-        <button class="tab active" data-section="about">~/about</button>
-        <button class="tab" data-section="skills">~/skills</button>
-        <button class="tab" data-section="projects">~/projects</button>
-        <button class="tab" data-section="contact">~/contact</button>
-      </div>
-    </div>
-    <div class="body" id="terminal-body"><!-- rendered by JS --></div>
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#home">
+      <span class="mark">苑</span>
+      <span class="brand-txt">
+        <strong>苑泽宇 · Alan</strong>
+        <span>FULL-STACK DEV</span>
+      </span>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="页面导航">
+      <a href="#about">关于</a>
+      <a href="#skills">技能</a>
+      <a href="#projects">作品</a>
+      <a href="#journal">日志</a>
+      <a href="#contact">联系</a>
+    </nav>
+    <a class="nav-gh" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">GitHub ↗</a>
+    <button class="burger" id="burger" aria-label="打开导航菜单" aria-expanded="false" aria-controls="navLinks"><span></span></button>
   </div>
+</header>
 
-  <!-- ══ Site map ══ -->
-  <section class="section">
-    <div class="section-head"><span class="dollar">$</span> ls -la ~/site/</div>
-    <div class="section-sub">total 6 —— 2 个子项目 · 1 个知识库 · 7 天学习日志 · 1 个外部链接 · 1 个可执行脚本</div>
-    <div class="sitemap">
-      <a class="node-card" href="./psych-assessment/">
-        <div class="nc-perm">drwxr-xr-x&nbsp;&nbsp;./psych-assessment/</div>
-        <div class="nc-name">心理健康智能问答平台</div>
-        <div class="nc-desc">React + TypeScript，接入金蝶苍穹 AI。知识图谱驱动问答与危机预警。</div>
-        <div class="nc-tag">[ React · TS · 知识图谱 ]</div>
-      </a>
-      <a class="node-card" href="./data_analysis/">
-        <div class="nc-perm">drwxr-xr-x&nbsp;&nbsp;./data_analysis/</div>
-        <div class="nc-name">数据分析项目</div>
-        <div class="nc-desc">数据处理与可视化实践，Notebook 到可部署结果的完整链路。</div>
-        <div class="nc-tag">[ Python · Pandas · 可视化 ]</div>
-      </a>
-      <a class="node-card" href="./knowledge.html">
-        <div class="nc-perm">-rw-r--r--&nbsp;&nbsp;./knowledge.html</div>
-        <div class="nc-name">前端知识库</div>
-        <div class="nc-desc">HTML / CSS / JS 知识体系汇总页，学习过程中的完整笔记索引。</div>
-        <div class="nc-tag">[ HTML5 · CSS3 · 笔记 ]</div>
-      </a>
-      <a class="node-card" href="./day1&2.html">
-        <div class="nc-perm">-rw-r--r--&nbsp;&nbsp;./day{1..7}.html</div>
-        <div class="nc-name">7 天 HTML 学习日志</div>
-        <div class="nc-desc">从 HTML5 基础、表单、到综合实践的循序渐进记录。</div>
-        <div class="nc-tag">day1&2 · day3 · day4 · day5 · day6 · day7 →</div>
-      </a>
-      <a class="node-card" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">
-        <div class="nc-perm symlink">lrwxrwxrwx&nbsp;&nbsp;-&gt; github.com</div>
-        <div class="nc-name">@lixiaoshuai-git</div>
-        <div class="nc-desc">源码、提交记录与更多实验性项目，欢迎 Star / Fork。</div>
-        <div class="nc-tag">[ git clone ↓ ]</div>
-      </a>
-      <a class="node-card" href="#contact" id="contact-card">
-        <div class="nc-perm exec">-rwxr-xr-x&nbsp;&nbsp;./send-signal.sh</div>
-        <div class="nc-name">建立连接</div>
-        <div class="nc-desc">技术合作 · 开源贡献 · 有趣的项目——ping me。</div>
-        <div class="nc-tag">[ open to work ]</div>
-      </a>
+<main id="main">
+
+  <!-- ══ Hero ══ -->
+  <section class="hero" id="home">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="pill reveal"><i class="live"></i>开放合作 · Open to work</span>
+        <h1 class="reveal" data-delay="60">苑泽宇 <span class="en">Alan</span></h1>
+        <div class="role reveal" data-delay="110">
+          <b>全栈开发者</b><i></i><span>四川大学 · 软件工程</span><i></i><span>AI Agent / 知识图谱</span>
+        </div>
+        <p class="tagline reveal" data-delay="160">
+          穿梭于前端界面与后端逻辑之间，热衷把想法变成现实——从知识图谱到智能对话，从企业系统到实验性项目。
+          近一年把技术落到具体的人身上：<em>心理健康方向的测评、预警与知识库</em>。
+        </p>
+        <div class="cta reveal" data-delay="210">
+          <a class="btn btn-primary" href="#projects">看看我的作品
+            <svg viewBox="0 0 24 24" width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">GitHub 源码</a>
+        </div>
+        <div class="stats reveal" data-delay="260">
+          <div class="stat"><b>3</b><span>在线作品</span></div>
+          <div class="stat"><b>20</b><span>技能模块</span></div>
+          <div class="stat"><b>5</b><span>维心理测评</span></div>
+          <div class="stat"><b>7</b><span>天学习日志</span></div>
+        </div>
+      </div>
+
+      <aside class="code-card reveal" data-delay="200" aria-label="个人状态">
+        <div class="code-head">
+          <span class="tl"><i></i><i></i><i></i></span>
+          <span>~/about/status.json</span>
+        </div>
+        <div class="code-body"><span class="p">{</span>
+  <span class="k">"name"</span><span class="p">     :</span> <span class="s">"苑泽宇 / Alan"</span><span class="p">,</span>
+  <span class="k">"school"</span><span class="p">   :</span> <span class="s">"四川大学 · 软件工程"</span><span class="p">,</span>
+  <span class="k">"focus"</span><span class="p">    :</span> <span class="p">[</span><span class="s">"AI Agent"</span><span class="p">,</span> <span class="s">"知识图谱"</span><span class="p">,</span> <span class="s">"LLM 集成"</span><span class="p">],</span>
+  <span class="k">"stack"</span><span class="p">    :</span> <span class="p">[</span><span class="s">"React"</span><span class="p">,</span> <span class="s">"TypeScript"</span><span class="p">,</span> <span class="s">"Node.js"</span><span class="p">,</span>
+                <span class="s">"Python"</span><span class="p">,</span> <span class="s">"MySQL"</span><span class="p">],</span>
+  <span class="k">"platform"</span><span class="p"> :</span> <span class="s">"金蝶苍穹 Agent Studio"</span><span class="p">,</span>
+  <span class="k">"status"</span><span class="p">   :</span> <span class="s">"持续构建中…"</span>
+<span class="p">}</span></div>
+        <div class="code-foot"><span id="typed"></span><span class="caret"></span></div>
+      </aside>
     </div>
   </section>
 
-  <div class="footer">
-    <span class="bracket">[</span> alan@home · uptime <span id="uptime"></span> · exit 0 · always building <span class="bracket">]</span>
+  <!-- ══ About ══ -->
+  <section class="sec" id="about">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">01 — About</span>
+        <h2>关于我</h2>
+        <p>一名在校园里做产品的全栈开发者：写界面、写接口，也写知识图谱与 Agent。</p>
+      </div>
+      <div class="about-grid">
+        <div class="prose reveal">
+          <p>我是<strong>苑泽宇</strong>，四川大学软件工程在读，一名<strong>全栈开发者</strong>。日常在 React / Vue 的组件树与 Node.js / Python 的服务端之间穿梭，也把不少时间花在 <span class="hl">AI Agent、知识图谱与 LLM 集成</span>上。</p>
+          <p>近一年我把重心放在心理健康方向的数字化产品：从量表测评、危机预警看板到知识图谱，把「技术」落到具体的人身上——一套 20 题的测评能生成四级预警，一张知识图谱能把零散的心理健康知识组织成可探索的网络。此外也接触过金蝶苍穹 Agent Studio 等企业级平台，做过覆盖 11 张数据表的 HR 管理系统。</p>
+          <p>我信奉 <strong>build first, talk later</strong>：先做出来，再把它讲清楚。</p>
+        </div>
+        <div class="info panel reveal" data-delay="100">
+          <div class="info-row">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg></span>
+            <span><span class="k">学校</span><span class="v" style="display:block">四川大学 · 软件工程</span></span>
+          </div>
+          <div class="info-row">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+            <span><span class="k">定位</span><span class="v" style="display:block">全栈开发 · AI Agent / 知识图谱</span></span>
+          </div>
+          <div class="info-row">
+            <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6v6H9z"/></svg></span>
+            <span><span class="k">平台</span><span class="v" style="display:block">金蝶苍穹 Agent Studio</span></span>
+          </div>
+          <div class="info-row">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+            <span><span class="k">状态</span><span class="v" style="display:block">持续构建中 · 开放合作</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Skills ══ -->
+  <section class="sec" id="skills">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">02 — Skills</span>
+        <h2>技能栈</h2>
+        <p>20 个技能模块，按职责分组：表现层、服务端、数据、AI 能力与工程工具链。</p>
+      </div>
+      <div class="skills">
+        <article class="skill reveal">
+          <div class="skill-top">
+            <span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+            <h3>前端<span class="n">05 modules</span></h3>
+          </div>
+          <div class="chips">
+            <span class="chip">React</span><span class="chip">TypeScript</span><span class="chip">Vue.js</span><span class="chip">D3.js</span><span class="chip">HTML5 / CSS3</span>
+          </div>
+        </article>
+        <article class="skill reveal" data-delay="70">
+          <div class="skill-top">
+            <span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="2.5" width="20" height="8" rx="2"/><rect x="2" y="13.5" width="20" height="8" rx="2"/><path d="M6 6.5h.01M6 17.5h.01"/></svg></span>
+            <h3>后端<span class="n">05 modules</span></h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Node.js</span><span class="chip">Python</span><span class="chip">Flask</span><span class="chip">Express</span><span class="chip">RESTful API</span>
+          </div>
+        </article>
+        <article class="skill reveal" data-delay="140">
+          <div class="skill-top">
+            <span class="ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8.5" ry="3"/><path d="M3.5 5.5v13c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3v-13"/><path d="M3.5 12c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3"/></svg></span>
+            <h3>数据<span class="n">02 modules</span></h3>
+          </div>
+          <div class="chips">
+            <span class="chip">MySQL</span><span class="chip">SQL</span>
+          </div>
+        </article>
+        <article class="skill reveal" data-delay="210">
+          <div class="skill-top">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l2 5.2L19.2 10 14 12l-2 5.2L10 12 4.8 10 10 8.2z"/><path d="M18.5 16.5l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7z"/></svg></span>
+            <h3>AI 能力<span class="n">04 modules</span></h3>
+          </div>
+          <div class="chips">
+            <span class="chip">AI Agent</span><span class="chip">知识图谱</span><span class="chip">NLP</span><span class="chip">LLM 集成</span>
+          </div>
+        </article>
+        <article class="skill reveal" data-delay="280">
+          <div class="skill-top">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 015 5L21 21H3l9.7-9.7z"/><path d="M6.5 14.5l3 3"/></svg></span>
+            <h3>工具链<span class="n">04 modules</span></h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Git</span><span class="chip">Docker</span><span class="chip">Vite</span><span class="chip">金蝶苍穹平台</span>
+          </div>
+        </article>
+      </div>
+      <p class="skill-note reveal"><span>→</span> 共加载 <b>20</b> 个技能模块 —— 全部就绪</p>
+    </div>
+  </section>
+
+  <!-- ══ Projects ══ -->
+  <section class="sec" id="projects">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">03 — Projects</span>
+        <h2>作品与实验</h2>
+        <p>三个可以直接在浏览器里打开的在线作品，以及若干进行中的项目。</p>
+      </div>
+
+      <div class="projects">
+        <article class="card reveal">
+          <span class="top-line"></span>
+          <div class="card-head">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M20.8 6.6a5.4 5.4 0 00-7.7 0l-1.1 1.1-1.1-1.1a5.4 5.4 0 10-7.7 7.7l8.8 8.7 8.8-8.7a5.4 5.4 0 000-7.7z"/><path d="M3.8 12.5h4l1.6-2.6 2.4 4.6 1.6-2h5.8"/></svg></span>
+            <div>
+              <h3>学生心理健康测评系统</h3>
+              <span class="badge"><i></i>Live demo</span>
+            </div>
+          </div>
+          <p>面向大学生的心理测评系统。基于 SCL-90 与 PHQ-9 改编的 5 维度 20 题量表，总分 0–80 分，自动生成维度分析与四级预警（良好 / 轻度 / 中度 / 重度），中度及以上附干预建议与心理援助热线，结果可提交留存。</p>
+          <div class="chips">
+            <span class="chip">Vue 3</span><span class="chip">Vite</span><span class="chip">量表设计</span><span class="chip">四级预警</span>
+          </div>
+          <div class="card-link"><a href="./psych-assessment/dist/">开始测评
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </article>
+
+        <article class="card reveal" data-delay="90">
+          <span class="top-line"></span>
+          <div class="card-head">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+            <div>
+              <h3>心理健康预警监测平台</h3>
+              <span class="badge"><i></i>Live demo</span>
+            </div>
+          </div>
+          <p>实时监控学生心理危机预警数据的可视化看板。预警记录自动滚动，右侧聚合预警总数、需关注人数与情绪等级分布，用 ECharts 呈现趋势与结构，鼠标悬停即可暂停滚动查看细节。</p>
+          <div class="chips">
+            <span class="chip">ECharts</span><span class="chip">数据可视化</span><span class="chip">实时监测</span>
+          </div>
+          <div class="card-link"><a href="./data_analysis/">打开监测看板
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </article>
+
+        <article class="card reveal" data-delay="180">
+          <span class="top-line"></span>
+          <div class="card-head">
+            <span class="ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.6l6.6-3.9M8.7 13.4l6.6 3.9"/></svg></span>
+            <div>
+              <h3>心理健康知识图谱</h3>
+              <span class="badge"><i></i>Live demo</span>
+            </div>
+          </div>
+          <p>基于 D3.js 力导向图的心理健康知识库。支持关键词搜索与节点定位、手动增删知识节点，并可上传文档自动解析生成图谱，把零散的心理健康知识组织成一张可以探索的网络。</p>
+          <div class="chips">
+            <span class="chip">D3.js</span><span class="chip">力导向图</span><span class="chip">文档解析</span>
+          </div>
+          <div class="card-link"><a href="./knowledge.html">探索知识图谱
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </article>
+      </div>
+
+      <div class="more panel reveal" data-delay="120">
+        <div class="more-title"><span>▚</span> 其他项目 · 在研</div>
+        <div class="more-row">
+          <div>
+            <h4>心理健康智能问答平台</h4>
+            <div class="sub">/ 合作项目</div>
+          </div>
+          <p>基于 React + TypeScript 构建的大学生心理智能问答系统，集成金蝶苍穹 AI 平台能力，包含知识图谱驱动的智能问答与危机预警模块。</p>
+          <div class="mini-chips"><span class="mini">React</span><span class="mini">TypeScript</span><span class="mini">金蝶苍穹</span><span class="mini">AI Agent</span></div>
+        </div>
+        <div class="more-row">
+          <div>
+            <h4>HR 管理系统</h4>
+            <div class="sub">/ 全栈企业系统</div>
+          </div>
+          <p>企业人事管理系统，Node.js + MySQL 实现，覆盖员工管理、部门架构、考勤统计与薪资核算，共 11 张数据库表的完整业务链路。</p>
+          <div class="mini-chips"><span class="mini">Node.js</span><span class="mini">MySQL</span><span class="mini">Vue.js</span><span class="mini">RESTful API</span></div>
+        </div>
+        <div class="more-row">
+          <div>
+            <h4>知识图谱研究</h4>
+            <div class="sub">/ 方向探索</div>
+          </div>
+          <p>探索知识图谱的构建与应用，涵盖实体关系抽取、D3.js 图谱可视化与 LLM 驱动的知识推理。</p>
+          <div class="mini-chips"><span class="mini">知识图谱</span><span class="mini">LLM</span><span class="mini">Python</span><span class="mini">D3.js</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Journal ══ -->
+  <section class="sec" id="journal">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">04 — Journal</span>
+        <h2>7 天 HTML 学习日志</h2>
+        <p>从 HTML5 基础到 CSS 样式实践，每天一个独立页面，记录从零开始的完整过程。</p>
+      </div>
+      <div class="timeline">
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day1&amp;2.html">
+            <span class="tl-day">DAY 1 – 2</span>
+            <span>
+              <h4>HTML5 基础与语义化</h4>
+              <p>HTML5 的定义与发展目标、新增语义元素与 API、W3C 标准制定历程。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day3.html">
+            <span class="tl-day">DAY 3</span>
+            <span>
+              <h4>常用元素综合练习</h4>
+              <p>超链接与 target、图片嵌入、video 标签、有序 / 无序列表的配合使用。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day4.html">
+            <span class="tl-day">DAY 4</span>
+            <span>
+              <h4>表单元素入门</h4>
+              <p>账号与密码输入框、name / id / placeholder 属性与基础表单结构。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day5.html">
+            <span class="tl-day">DAY 5</span>
+            <span>
+              <h4>表单交互与布局</h4>
+              <p>下拉选择、文本域、单选按钮与 label 的两种关联写法、hr 分隔布局。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day6.html">
+            <span class="tl-day">DAY 6</span>
+            <span>
+              <h4>BUTTON 与 CSS 初识</h4>
+              <p>reset / submit 按钮类型、style 与 link 两种样式引入方式、类选择器。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+        <div class="tl-item reveal">
+          <a class="tl-card" href="./day7.html">
+            <span class="tl-day">DAY 7</span>
+            <span>
+              <h4>CSS 样式实践</h4>
+              <p>颜色写法（十六进制 / rgb / rgba）、文本与字体属性、盒模型与 font 简写。</p>
+            </span>
+            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Contact ══ -->
+  <section class="sec" id="contact">
+    <div class="wrap">
+      <div class="contact reveal">
+        <h2>一起做点<span class="grad-txt">有意思的东西</span></h2>
+        <p>技术合作、开源贡献，或者只是一个你正在折腾的有趣项目——都欢迎来找我聊。工作日通常当天回复。</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">在 GitHub 找我
+            <svg viewBox="0 0 24 24" width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="https://lixiaoshuai-git.github.io" target="_blank" rel="noopener">访问主页</a>
+        </div>
+        <div class="open">
+          <span>技术合作</span><span>开源贡献</span><span>有趣的项目</span><span>实习机会</span>
+        </div>
+        <div class="links">
+          <a href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M9 19c-4 1.4-4-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 00-1.3-3.2 4.3 4.3 0 00-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 00-6 0C6.8 2.8 5.8 3.1 5.8 3.1a4.3 4.3 0 00-.1 3.2A4.6 4.6 0 004.4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
+            github.com/lixiaoshuai-git
+          </a>
+          <a href="https://lixiaoshuai-git.github.io" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            lixiaoshuai-git.github.io
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap foot-inner">
+    <div class="foot-brand">
+      <span class="mark">苑</span>
+      <span>
+        <strong>苑泽宇 · Alan</strong>
+        <span>四川大学 · 软件工程</span>
+      </span>
+    </div>
+    <div class="foot-note">© <span id="year">2026</span> 苑泽宇 · 纯静态 HTML / CSS / JS · GitHub Pages 托管 · <b>always building</b></div>
   </div>
-</div>
+</footer>
+
+<button class="totop" id="totop" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
 
 <script>
-/* ── ASCII art ─────────────────────────────── */
-const ascii = `
-    █████╗ ██╗      █████╗ ███╗   ██╗
-   ██╔══██╗██║     ██╔══██╗████╗  ██║
-   ███████║██║     ███████║██╔██╗ ██║
-   ██╔══██║██║     ██╔══██║██║╚██╗██║
-   ██║  ██║███████╗██║  ██║██║ ╚████║
-   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
-`.split('\n').slice(1, 7).join('\n');
-document.getElementById('ascii-art').textContent = ascii;
+(function(){
+  'use strict';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $  = function(s,c){ return (c||document).querySelector(s); };
+  var $$ = function(s,c){ return Array.prototype.slice.call((c||document).querySelectorAll(s)); };
 
-/* ── Particles ─────────────────────────────── */
-const particles = document.getElementById('particles');
-for (let i = 0; i < 26; i++) {
-  const p = document.createElement('div');
-  p.className = 'particle';
-  p.style.left = Math.random() * 100 + '%';
-  p.style.width = Math.random() * 4 + 1 + 'px';
-  p.style.height = p.style.width;
-  p.style.animationDelay = Math.random() * 8 + 's';
-  p.style.animationDuration = Math.random() * 6 + 6 + 's';
-  particles.appendChild(p);
-}
-
-/* ── Tab sections ──────────────────────────── */
-const sections = {
-  about: `
-<div class="line prompt"><span class="cmd" id="about-output"></span><span class="cursor"></span></div>
-<div class="line output">苑泽宇 / Alan —— 四川大学软件工程在读，全栈开发者。</div>
-<div class="line output dim">穿梭于前端界面与后端逻辑之间，热衷把想法变成现实——从知识图谱到智能对话，从企业系统到实验性项目。坚信 <span class="hl-cyan">build first, talk later</span>。</div>
-<div class="line prompt" style="margin-top:14px"><span class="cmd">cat ~/status.json</span></div>
-<div class="line output"><span class="punct">{</span>
-  <span class="key">"focus"</span>    <span class="punct">:</span> [<span class="str">"AI Agent"</span>, <span class="str">"知识图谱"</span>, <span class="str">"LLM 集成"</span>]<span class="punct">,</span>
-  <span class="key">"stack"</span>    <span class="punct">:</span> [<span class="str">"React"</span>, <span class="str">"TypeScript"</span>, <span class="str">"Node.js"</span>, <span class="str">"Python"</span>, <span class="str">"MySQL"</span>]<span class="punct">,</span>
-  <span class="key">"platform"</span> <span class="punct">:</span> <span class="str">"金蝶苍穹 Agent Studio"</span><span class="punct">,</span>
-  <span class="key">"status"</span>   <span class="punct">:</span> <span class="str">"持续构建中..."</span>
-<span class="punct">}</span></div>`,
-  skills: `
-<div class="line prompt"><span class="cmd" id="skills-output"></span><span class="cursor"></span></div>
-<div class="line output"><span class="hl-cyan"># 前端</span></div>
-<div class="line output"><span class="tag frontend">React</span><span class="tag frontend">TypeScript</span><span class="tag frontend">Vue.js</span><span class="tag frontend">D3.js</span><span class="tag frontend">HTML5/CSS3</span></div>
-<div class="line output"><span class="hl-cyan"># 后端</span></div>
-<div class="line output"><span class="tag backend">Node.js</span><span class="tag backend">Python</span><span class="tag backend">Flask</span><span class="tag backend">Express</span><span class="tag backend">RESTful API</span></div>
-<div class="line output"><span class="hl-cyan"># 数据</span></div>
-<div class="line output"><span class="tag db">MySQL</span><span class="tag db">SQL</span></div>
-<div class="line output"><span class="hl-cyan"># AI</span></div>
-<div class="line output"><span class="tag ai">AI Agent</span><span class="tag ai">知识图谱</span><span class="tag ai">NLP</span><span class="tag ai">LLM 集成</span></div>
-<div class="line output"><span class="hl-cyan"># 工具链</span></div>
-<div class="line output"><span class="tag tool">Git</span><span class="tag tool">Docker</span><span class="tag tool">Vite</span><span class="tag tool">金蝶苍穹平台</span></div>
-<div class="line output dim" style="font-size:12px;margin-top:6px"><span class="hl">$</span> 共加载 <span class="hl-yellow">20</span> 个技能模块 —— 全部就绪</div>`,
-  projects: `
-<div class="line prompt"><span class="cmd" id="projects-output"></span><span class="cursor"></span></div>
-<div class="proj">
-  <div class="proj-name">心理健康智能问答平台</div>
-  <div class="proj-desc">基于 React + TypeScript 构建的大学生心理智能问答系统，集成金蝶苍穹 AI 平台能力，包含知识图谱驱动的智能问答、危机预警等核心模块。</div>
-  <div><span class="tag frontend">React</span><span class="tag frontend">TypeScript</span><span class="tag ai">知识图谱</span><span class="tag ai">AI Agent</span><span class="tag tool">金蝶苍穹</span></div>
-</div>
-<div class="proj">
-  <div class="proj-name">HR 管理系统</div>
-  <div class="proj-desc">全栈企业人事管理系统，Node.js + MySQL，覆盖员工管理、部门架构、考勤统计、薪资核算等 11 张数据库表的完整业务。</div>
-  <div><span class="tag backend">Node.js</span><span class="tag db">MySQL</span><span class="tag frontend">Vue.js</span><span class="tag backend">RESTful API</span></div>
-</div>
-<div class="proj">
-  <div class="proj-name">知识图谱研究项目</div>
-  <div class="proj-desc">探索知识图谱的构建与应用，涵盖实体关系抽取、D3.js 图谱可视化、LLM 驱动的知识推理等方向。</div>
-  <div><span class="tag ai">知识图谱</span><span class="tag frontend">D3.js</span><span class="tag ai">LLM</span><span class="tag backend">Python</span></div>
-</div>`,
-  contact: `
-<div class="line prompt"><span class="cmd" id="contact-output"></span><span class="cursor"></span></div>
-<div class="line output"><span class="hl-cyan">Signal broadcasting on following channels:</span></div>
-<div class="line output">  <span class="punct">▸</span> GitHub&nbsp;&nbsp;: <a href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener" style="color:var(--green)">github.com/lixiaoshuai-git</a></div>
-<div class="line output">  <span class="punct">▸</span> 主页&nbsp;&nbsp;&nbsp;&nbsp;: <a href="https://lixiaoshuai-git.github.io" target="_blank" rel="noopener" style="color:var(--cyan)">lixiaoshuai-git.github.io</a></div>
-<div class="line output" style="margin-top:18px"><span class="punct">┌──────────────────────────────────────────┐
-│  <span class="hl">Open to:</span> 技术合作 · 开源贡献 · 有趣的项目    │
-│  <span class="hl-cyan">Ping me</span> if you're building something cool  │
-└──────────────────────────────────────────┘</span></div>`
-};
-
-/* ── Typing effect ─────────────────────────── */
-function typeText(el, text, speed, callback) {
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < text.length) { el.textContent = text.substring(0, i + 1); i++; }
-    else {
-      clearInterval(interval);
-      const cursor = el.parentElement.querySelector('.cursor');
-      if (cursor) cursor.style.display = 'none';
-      if (callback) callback();
-    }
-  }, speed);
-}
-
-/* ── Render section ────────────────────────── */
-function renderSection(name) {
-  const body = document.getElementById('terminal-body');
-  body.innerHTML = sections[name];
-  const outputSpan = document.getElementById(name + '-output');
-  if (outputSpan) {
-    const commands = {
-      about: 'whoami', skills: 'ls -la ~/skills/',
-      projects: 'ls ~/projects/', contact: './send-signal.sh'
-    };
-    setTimeout(() => {
-      typeText(outputSpan, commands[name], 60, () => {
-        body.querySelectorAll('.cursor').forEach(c => c.style.display = 'none');
+  /* ── 滚动揭示 ── */
+  var items = $$('.reveal');
+  if (!('IntersectionObserver' in window) || reduce) {
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var el = e.target;
+        var d = parseInt(el.getAttribute('data-delay') || '0', 10);
+        setTimeout(function(){ el.classList.add('in'); }, d);
+        io.unobserve(el);
       });
-    }, 120);
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    items.forEach(function(el){ io.observe(el); });
   }
-}
 
-/* ── Tab switching ─────────────────────────── */
-function activateTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const tab = document.querySelector(`.tab[data-section="${name}"]`);
-  if (tab) tab.classList.add('active');
-  renderSection(name);
-}
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => activateTab(tab.dataset.section));
-});
-
-/* contact card scrolls + switches tab */
-document.getElementById('contact-card').addEventListener('click', (e) => {
-  e.preventDefault();
-  activateTab('contact');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-/* ── Uptime ────────────────────────────────── */
-document.getElementById('uptime').textContent =
-  Math.floor((Date.now() - new Date('2024-01-01').getTime()) / 86400000) + ' days';
-
-/* ── Init ──────────────────────────────────── */
-renderSection('about');
-
-/* ── Random flicker ────────────────────────── */
-const terminal = document.querySelector('.terminal');
-setInterval(() => {
-  if (Math.random() < 0.03) {
-    terminal.style.opacity = '0.97';
-    setTimeout(() => { terminal.style.opacity = '1'; }, 60);
+  /* ── 导航：滚动态 + 滚动高亮 + 移动端菜单 ── */
+  var nav = $('#nav'), burger = $('#burger'), navLinks = $('#navLinks');
+  function closeMenu(){
+    navLinks.classList.remove('open');
+    if (burger) burger.setAttribute('aria-expanded','false');
   }
-}, 2000);
+  if (burger) {
+    burger.addEventListener('click', function(){
+      var open = navLinks.classList.toggle('open');
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    $$('a', navLinks).forEach(function(a){ a.addEventListener('click', closeMenu); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeMenu(); });
+    document.addEventListener('click', function(e){
+      if (!navLinks.contains(e.target) && !burger.contains(e.target)) closeMenu();
+    });
+  }
 
-/* ── Keyboard shortcuts 1-4 ────────────────── */
-document.addEventListener('keydown', (e) => {
-  const map = { '1': 'about', '2': 'skills', '3': 'projects', '4': 'contact' };
-  if (map[e.key]) activateTab(map[e.key]);
-});
+  var links = $$('#navLinks a');
+  var sections = links.map(function(a){ return $(a.getAttribute('href')); }).filter(Boolean);
+  function onScroll(){
+    var y = window.scrollY || window.pageYOffset;
+    nav.classList.toggle('scrolled', y > 12);
+    var top = $('#totop');
+    if (top) top.classList.toggle('show', y > 620);
+    var idx = -1;
+    sections.forEach(function(sec, i){
+      if (sec.getBoundingClientRect().top <= 140) idx = i;
+    });
+    links.forEach(function(a, i){ a.classList.toggle('active', i === idx); });
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){ onScroll(); ticking = false; });
+  }, { passive: true });
+  onScroll();
+
+  /* ── 卡片光斑跟随 ── */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    $$('.card').forEach(function(card){
+      card.addEventListener('pointermove', function(e){
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  }
+
+  /* ── 打字机 ── */
+  var typed = $('#typed');
+  if (typed) {
+    var full = 'build first, talk later -- 先做出来，再讲清楚';
+    if (reduce) { typed.textContent = full; }
+    else {
+      var i = 0;
+      var tick = setInterval(function(){
+        typed.textContent = full.slice(0, ++i);
+        if (i >= full.length) clearInterval(tick);
+      }, 46);
+    }
+  }
+
+  /* ── 回到顶部 ── */
+  var totop = $('#totop');
+  if (totop) totop.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  });
+
+  /* ── 年份 ── */
+  var yr = $('#year');
+  if (yr) yr.textContent = new Date().getFullYear();
+})();
 </script>
 </body>
 </html>
