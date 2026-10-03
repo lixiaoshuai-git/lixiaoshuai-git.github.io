@@ -200,21 +200,19 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
 .mini-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:292px}
 .mini{padding:3px 9px;border-radius:7px;font-family:var(--mono);font-size:10.8px;color:#a9b6d0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);white-space:nowrap}
 
-/* ═══════════ Timeline ═══════════ */
-.timeline{position:relative;padding-left:34px}
-.timeline::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:1px;background:linear-gradient(180deg,rgba(124,156,255,.75),rgba(94,234,212,.45) 55%,transparent)}
-.tl-item{position:relative;padding-bottom:14px}
-.tl-item::before{content:'';position:absolute;left:-34px;top:24px;width:19px;height:19px;border-radius:50%;background:rgba(5,6,12,1);border:1px solid rgba(124,156,255,.5);box-shadow:0 0 0 4px rgba(124,156,255,.09)}
-.tl-item::after{content:'';position:absolute;left:-29px;top:29px;width:9px;height:9px;border-radius:50%;background:var(--grad-btn);transition:transform .3s}
-.tl-item:hover::after{transform:scale(1.28)}
-.tl-card{display:grid;grid-template-columns:112px 1fr auto;gap:22px;align-items:center;padding:20px 24px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);transition:transform .28s cubic-bezier(.2,.8,.2,1),border-color .28s,background .28s}
-.tl-card:hover{transform:translateX(6px);border-color:var(--line-2);background:var(--glass-2)}
-.tl-day{font-family:var(--mono);font-size:12.5px;font-weight:500;color:#a8bcff}
-.tl-card h4{font-size:15px;font-weight:650;letter-spacing:-.01em}
-.tl-card p{margin-top:6px;font-size:13.2px;line-height:1.75;color:var(--muted)}
-.tl-go{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color .2s,gap .25s}
-.tl-card:hover .tl-go{color:#a8bcff;gap:11px}
-.tl-go svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* ═══════════ Assets ═══════════ */
+.sec-head code{font-family:var(--mono);font-size:12.4px;background:rgba(255,255,255,.07);border:1px solid var(--line);padding:2px 7px;border-radius:6px;color:#cfe0ff}
+.asset-group+.asset-group{margin-top:30px}
+.asset-group-title{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:#8b98b8;margin-bottom:14px}
+.assets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+.asset{display:flex;flex-direction:column;border-radius:var(--r-md);border:1px solid var(--line);background:var(--glass);overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s}
+.asset:hover{transform:translateY(-4px);border-color:var(--line-2);box-shadow:0 22px 40px -26px rgba(0,0,0,.95)}
+.asset-thumb{display:grid;place-items:center;height:134px;padding:12px;background:linear-gradient(180deg,#f4f6fb,#e7ebf4)}
+.asset-thumb img{max-width:100%;max-height:110px;width:auto;height:auto;border-radius:5px;box-shadow:0 2px 10px rgba(15,23,42,.12)}
+.asset-meta{padding:11px 13px 13px;display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line)}
+.asset-meta b{font-family:var(--mono);font-size:11.5px;font-weight:500;color:#cfd8ea}
+.asset-meta i{font-style:normal;font-size:11.5px;color:var(--dim)}
+.asset-note{margin-top:18px;font-size:12.6px;color:var(--dim);line-height:1.8}
 
 /* ═══════════ Contact ═══════════ */
 .contact{padding:clamp(38px,5vw,58px) clamp(26px,4vw,54px);border-radius:26px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(160deg,rgba(124,156,255,.13),rgba(94,234,212,.07) 55%,rgba(255,255,255,.02));border:1px solid var(--line-2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 50px 100px -50px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.09)}
@@ -261,8 +259,6 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
   .burger{display:flex}
   .more-row{grid-template-columns:1fr;gap:10px}
   .mini-chips{justify-content:flex-start;max-width:none}
-  .tl-card{grid-template-columns:1fr;gap:12px}
-  .tl-go{justify-self:start}
 }
 @media (max-width:560px){
   .wrap{padding:0 18px}
@@ -270,11 +266,6 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
   .stat b{font-size:21px}
   .card,.skill{padding:22px 20px}
   .code-body{font-size:11.8px;padding:16px 16px 18px}
-  .timeline{padding-left:26px}
-  .timeline::before{left:7px}
-  .tl-item::before{left:-26px;top:20px;width:15px;height:15px}
-  .tl-item::after{left:-22px;top:24px;width:7px;height:7px}
-  .tl-card{padding:18px}
   .contact{padding:34px 20px}
   .totop{right:14px;bottom:14px;width:42px;height:42px}
 }
@@ -311,7 +302,7 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
       <a href="#about">关于</a>
       <a href="#skills">技能</a>
       <a href="#projects">作品</a>
-      <a href="#journal">日志</a>
+      <a href="#assets">资源</a>
       <a href="#contact">联系</a>
     </nav>
     <a class="nav-gh" href="https://github.com/lixiaoshuai-git" target="_blank" rel="noopener">GitHub ↗</a>
@@ -344,7 +335,7 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
           <div class="stat"><b>3</b><span>在线作品</span></div>
           <div class="stat"><b>20</b><span>技能模块</span></div>
           <div class="stat"><b>5</b><span>维心理测评</span></div>
-          <div class="stat"><b>7</b><span>天学习日志</span></div>
+          <a class="stat" href="#assets"><b>10</b><span>张素材图</span></a>
         </div>
       </div>
 
@@ -557,76 +548,74 @@ h1 .en{background:var(--grad);-webkit-background-clip:text;background-clip:text;
     </div>
   </section>
 
-  <!-- ══ Journal ══ -->
-  <section class="sec" id="journal">
+  <!-- ══ Assets ══ -->
+  <section class="sec" id="assets">
     <div class="wrap">
       <div class="sec-head reveal">
-        <span class="eyebrow">04 — Journal</span>
-        <h2>7 天 HTML 学习日志</h2>
-        <p>从 HTML5 基础到 CSS 样式实践，每天一个独立页面，记录从零开始的完整过程。</p>
+        <span class="eyebrow">04 — Assets</span>
+        <h2>素材资源</h2>
+        <p>项目用到的图片统一放在 <code>assets/</code> 目录。首页只加载缩略图（合计约 135&nbsp;KB），点击任意一张可打开原图。</p>
       </div>
-      <div class="timeline">
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day1&amp;2.html">
-            <span class="tl-day">DAY 1 – 2</span>
-            <span>
-              <h4>HTML5 基础与语义化</h4>
-              <p>HTML5 的定义与发展目标、新增语义元素与 API、W3C 标准制定历程。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+
+      <div class="asset-group reveal">
+        <h3 class="asset-group-title"><span>▚</span> 标识 / Logo</h3>
+        <div class="assets-grid">
+          <a class="asset" href="./assets/SCU.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/SCU.webp" alt="四川大学标识" loading="lazy" width="480" height="162"></span>
+            <span class="asset-meta"><b>SCU.png</b><i>四川大学标识 · 2585×875</i></span>
           </a>
-        </div>
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day3.html">
-            <span class="tl-day">DAY 3</span>
-            <span>
-              <h4>常用元素综合练习</h4>
-              <p>超链接与 target、图片嵌入、video 标签、有序 / 无序列表的配合使用。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          <a class="asset" href="./assets/SCU_whiteback.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/SCU_whiteback.webp" alt="四川大学标识（白底）" loading="lazy" width="480" height="162"></span>
+            <span class="asset-meta"><b>SCU_whiteback.png</b><i>四川大学标识 · 白底版</i></span>
           </a>
-        </div>
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day4.html">
-            <span class="tl-day">DAY 4</span>
-            <span>
-              <h4>表单元素入门</h4>
-              <p>账号与密码输入框、name / id / placeholder 属性与基础表单结构。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          <a class="asset" href="./assets/mental_Icon.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/mental_Icon.webp" alt="大学生心理健康平台图标" loading="lazy" width="480" height="263"></span>
+            <span class="asset-meta"><b>mental_Icon.png</b><i>心理健康平台图标 · 560×307</i></span>
           </a>
-        </div>
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day5.html">
-            <span class="tl-day">DAY 5</span>
-            <span>
-              <h4>表单交互与布局</h4>
-              <p>下拉选择、文本域、单选按钮与 label 的两种关联写法、hr 分隔布局。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </a>
-        </div>
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day6.html">
-            <span class="tl-day">DAY 6</span>
-            <span>
-              <h4>BUTTON 与 CSS 初识</h4>
-              <p>reset / submit 按钮类型、style 与 link 两种样式引入方式、类选择器。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </a>
-        </div>
-        <div class="tl-item reveal">
-          <a class="tl-card" href="./day7.html">
-            <span class="tl-day">DAY 7</span>
-            <span>
-              <h4>CSS 样式实践</h4>
-              <p>颜色写法（十六进制 / rgb / rgba）、文本与字体属性、盒模型与 font 简写。</p>
-            </span>
-            <span class="tl-go">查看笔记 <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          <a class="asset" href="./assets/mental_Icon1.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/mental_Icon1.webp" alt="大学生心理健康平台横幅" loading="lazy" width="480" height="197"></span>
+            <span class="asset-meta"><b>mental_Icon1.png</b><i>心理健康平台横幅 · 1249×512</i></span>
           </a>
         </div>
       </div>
+
+      <div class="asset-group reveal">
+        <h3 class="asset-group-title"><span>▚</span> 飞机大战 · 游戏截图</h3>
+        <div class="assets-grid">
+          <a class="asset" href="./assets/plane1.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/plane1.webp" alt="飞机大战主菜单" loading="lazy" width="313" height="480"></span>
+            <span class="asset-meta"><b>plane1.png</b><i>主菜单 · 514×787</i></span>
+          </a>
+          <a class="asset" href="./assets/plane2.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/plane2.webp" alt="飞机大战玩法说明" loading="lazy" width="340" height="480"></span>
+            <span class="asset-meta"><b>plane2.png</b><i>玩法说明 · 561×793</i></span>
+          </a>
+          <a class="asset" href="./assets/plane3.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/plane3.webp" alt="飞机大战游戏画面" loading="lazy" width="314" height="480"></span>
+            <span class="asset-meta"><b>plane3.png</b><i>游戏画面 · 509×778</i></span>
+          </a>
+          <a class="asset" href="./assets/plane4.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/plane4.webp" alt="飞机大战截图" loading="lazy" width="309" height="480"></span>
+            <span class="asset-meta"><b>plane4.png</b><i>游戏截图 · 497×771</i></span>
+          </a>
+        </div>
+      </div>
+
+      <div class="asset-group reveal">
+        <h3 class="asset-group-title"><span>▚</span> 插画</h3>
+        <div class="assets-grid">
+          <a class="asset" href="./assets/doraB.jpg" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/doraB.webp" alt="哆啦A梦手绘稿" loading="lazy" width="480" height="477"></span>
+            <span class="asset-meta"><b>doraB.jpg</b><i>哆啦A梦 · 手绘稿</i></span>
+          </a>
+          <a class="asset" href="./assets/doraNoleg.png" target="_blank" rel="noopener">
+            <span class="asset-thumb"><img src="./assets/thumbs/doraNoleg.webp" alt="哆啦A梦插画" loading="lazy" width="480" height="480"></span>
+            <span class="asset-meta"><b>doraNoleg.png</b><i>哆啦A梦 · AI 生成版</i></span>
+          </a>
+        </div>
+      </div>
+
+      <p class="asset-note reveal">以上素材同样用于心理健康平台、飞机大战等其它项目，因此保留在本仓库统一存放。</p>
     </div>
   </section>
 
