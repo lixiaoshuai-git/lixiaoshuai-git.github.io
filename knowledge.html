@@ -99,6 +99,12 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
 #upload-modal .btn-cancel:hover{background:#f5f5f5}
 #upload-modal .btn-confirm{background:#27ae60;border:none;color:#fff;font-weight:600}
 #upload-modal .btn-confirm:disabled{background:#ccc;cursor:not-allowed}
+#upload-modal .key-row{margin-bottom:16px;text-align:left}
+#upload-modal .key-row label{display:block;font-size:12px;color:#666;margin-bottom:6px}
+#upload-modal .key-row input{width:100%;height:36px;padding:0 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;outline:none;transition:border-color .2s}
+#upload-modal .key-row input:focus{border-color:#27ae60;box-shadow:0 0 0 2px rgba(39,174,96,.15)}
+#upload-modal .key-row .key-hint{font-size:11px;color:#aaa;margin-top:6px;line-height:1.6}
+#upload-modal .key-row .key-hint a{color:#27ae60}
 #upload-progress-bar{display:none;height:4px;background:#27ae60;border-radius:2px;margin-top:12px;transition:width .3s;width:0}
 #upload-progress-text{display:none;font-size:12px;color:#888;margin-top:4px;text-align:center}
 </style>
@@ -205,6 +211,11 @@ body,html{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
   <div class="modal-box">
     <h3>上传文档生成知识图谱</h3>
     <p class="sub">AI 自动提取文档中的实体关系，生成可视化知识图谱</p>
+    <div class="key-row">
+      <label for="zhipu-key">智谱 AI API Key（只保存在本机浏览器，不会上传到服务器）</label>
+      <input type="password" id="zhipu-key" placeholder="粘贴你的 API Key" autocomplete="off" spellcheck="false">
+      <div class="key-hint">用于调用 glm-4-flash 解析文档，填一次即可。没有 Key 可到 <a href="https://open.bigmodel.cn" target="_blank" rel="noopener">open.bigmodel.cn</a> 免费申请。</div>
+    </div>
     <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
       <div class="dz-icon">📄</div>
       <div class="dz-text" id="dz-text">点击选择或拖拽文件</div>
@@ -660,9 +671,22 @@ function clearAllCustom() {
 
 // ============ 文档上传 & AI 解析 ============
 var selectedFile = null;
-var ZHIPU_API_KEY = '91acd8b1d73d4b498e1f5c553cf70ed8.9IEFg1QNcs2ASl3M';
+
+// ⚠️ 不要把 API Key 写进源码：这是公开仓库，等于把 Key 公开泄露。
+// Key 改由使用者自行填写，仅保存在本机 localStorage 里。
+var ZHIPU_KEY_STORAGE = 'kg_zhipu_api_key';
+function getZhipuKey() {
+  var k = '';
+  try { k = localStorage.getItem(ZHIPU_KEY_STORAGE) || ''; } catch (e) {}
+  return k.trim();
+}
+function setZhipuKey(k) {
+  try { localStorage.setItem(ZHIPU_KEY_STORAGE, (k || '').trim()); } catch (e) {}
+}
 
 function openUploadModal() {
+  var input = document.getElementById('zhipu-key');
+  if (input) input.value = getZhipuKey();
   document.getElementById('upload-modal').classList.add('show');
 }
 
@@ -752,6 +776,9 @@ function doExtract(file, resolve, reject) {
 
 // 调智谱 AI 提取实体关系
 async function callAI(text) {
+  var apiKey = getZhipuKey();
+  if (!apiKey) throw new Error('还没有填写智谱 API Key，请在弹窗顶部输入后再试');
+
   var prompt = [
     '你是一个知识图谱提取专家。从以下文本中提取实体和关系。',
     '严格输出JSON格式（不要markdown，不要任何解释）：',
@@ -766,7 +793,7 @@ async function callAI(text) {
 
   var resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+ZHIPU_API_KEY },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+apiKey },
     body: JSON.stringify({
       model: 'glm-4-flash',
       messages: [{role:'user', content:prompt}],
@@ -795,6 +822,14 @@ async function callAI(text) {
 // 主流程
 async function processUpload() {
   if (!selectedFile) return;
+  var keyInput = document.getElementById('zhipu-key');
+  var enteredKey = keyInput ? keyInput.value.trim() : '';
+  if (!enteredKey) {
+    alert('请先在弹窗顶部填写智谱 AI API Key，再开始解析');
+    if (keyInput) keyInput.focus();
+    return;
+  }
+  setZhipuKey(enteredKey);
   var btn = document.getElementById('btn-upload');
   btn.disabled = true; btn.textContent = '解析中...';
 
