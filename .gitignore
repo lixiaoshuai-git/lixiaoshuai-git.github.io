@@ -1,0 +1,34 @@
+# ── 依赖 ──────────────────────────────
+node_modules/
+
+# ── 构建产物 ──────────────────────────
+# 注意：psych-assessment/dist/ 是 GitHub Pages 实际部署的目录，故意提交进仓库，
+# 所以这里不忽略它。它由 `npm run build` 生成后再提交。
+.vite/
+
+# ── 密钥 / 环境变量（绝对不要提交）────
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+
+# ── 编辑器 / 操作系统 ─────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# ── 日志与临时文件 ────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+*.tmp
+*~
+
+# ── 备份文件 ──────────────────────────
+# 旧版本请用 git log / git show 找回，不要往仓库里堆 .bak
+*.bak
+*.old
+*.terminal-backup
