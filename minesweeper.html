@@ -71,7 +71,8 @@
     font-size:calc(var(--cell)*.56); font-weight:700; user-select:none; cursor:pointer;
     background:linear-gradient(160deg,#123415,#0b200d);
     border:1px solid #1f4a25;
-    transition:background .1s, transform .05s;
+    transition:transform .05s, background .03s linear;
+    -webkit-touch-callout:none;
   }
   .cell:hover{background:linear-gradient(160deg,#1a4a1e,#0e2a11); border-color:#2e6b36}
   .cell:active{transform:scale(.94)}
@@ -497,6 +498,8 @@ function newGame(){
 }
 
 /* ── 事件 ── */
+/* 全页禁用右键菜单:右键专职插旗(顺带屏蔽触屏长按菜单) */
+document.addEventListener('contextmenu',function(e){e.preventDefault();});
 boardEl.addEventListener('contextmenu',function(e){
   var c=e.target.closest('.cell');if(!c)return;
   e.preventDefault();
