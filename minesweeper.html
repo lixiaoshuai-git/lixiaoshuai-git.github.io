@@ -95,15 +95,20 @@
   #board.win .cell:not(.open):not(.flag){animation:winwave 1.2s ease infinite}
   @keyframes winwave{0%,100%{filter:brightness(1)}50%{filter:brightness(1.7)}}
 
-  .banner{min-height:30px; text-align:center; font-size:14px; letter-spacing:.22em; margin:16px 0 4px}
+  .banner{min-height:24px; text-align:center; font-size:14px; letter-spacing:.22em; margin:10px 0 2px}
   .banner.win{color:var(--green); text-shadow:0 0 14px rgba(0,255,65,.8); animation:pulse 1s infinite}
   .banner.dead{color:var(--red); text-shadow:0 0 14px rgba(255,71,71,.8)}
 
-  .note{margin-top:22px; border:1px solid var(--line); border-radius:4px; background:var(--panel);
-    padding:14px 18px; font-size:12px; line-height:2; color:var(--faint); letter-spacing:.04em}
+  .note{margin-top:14px; border:1px solid var(--line); border-radius:4px; background:var(--panel);
+    padding:10px 16px; font-size:12px; color:var(--faint); letter-spacing:.04em}
+  .note summary{cursor:pointer; line-height:1.9; list-style:none; user-select:none}
+  .note summary::-webkit-details-marker{display:none}
+  .note summary::before{content:"▸ "; color:var(--dim)}
+  .note[open] summary::before{content:"▾ "}
   .note .tag{color:var(--green); text-shadow:0 0 6px rgba(0,255,65,.5); letter-spacing:.14em}
   .note em{color:#7fc08d; font-style:normal}
-  .note .gen-info{color:#41654a; font-size:11px}
+  .note-body{line-height:2; margin-top:6px; border-top:1px dashed var(--line); padding-top:8px}
+  .note .gen-info{color:#41654a; font-size:11px; margin-left:10px}
   .foot{margin-top:16px; text-align:center; font-size:11px; color:#34503a; letter-spacing:.12em}
 </style>
 </head>
@@ -133,14 +138,15 @@
   <div class="board-scroll" id="boardScroll"><div id="board"></div></div>
   <div class="banner" id="banner"></div>
 
-  <div class="note">
-    <span class="tag">◉ SOLVABLE-GUARANTEED</span> — 每一局都经内置求解器验证:<em>纯逻辑可解,绝无"只能靠猜"的死局</em><br>
-    ▸ 首次点击的 3×3 范围保证无雷,开局必安全<br>
-    ▸ 布雷后由求解器以「<em>单格约束</em> / <em>子集消减</em> / <em>全局计数</em>」三种规则推演全盘,
-      存在完整逻辑解路径才算生成成功,否则自动重新洗牌<br>
-    ▸ 操作:左键翻开 · 右键/长按插旗 · 点击数字和弦翻格 · R 重开<br>
-    <span class="gen-info" id="genInfo"></span>
-  </div>
+  <details class="note" id="noteBox">
+    <summary><span class="tag">◉ SOLVABLE-GUARANTEED</span> 每局经求解器验证：纯逻辑可解，绝无"只能靠猜"的死局<span class="gen-info" id="genInfo"></span></summary>
+    <div class="note-body">
+      ▸ 首次点击的 3×3 范围保证无雷，开局必安全<br>
+      ▸ 布雷后由求解器以「<em>单格约束</em> / <em>子集消减</em> / <em>全局计数</em>」三种规则推演全盘，
+        存在完整逻辑解路径才算生成成功，否则自动重新洗牌<br>
+      ▸ 操作：左键翻开 · 右键/长按插旗 · 点击数字和弦翻格 · R 重开 · 1/2/3 换难度
+    </div>
+  </details>
 
   <div class="foot">lixiaoshuai-git.github.io / minesweeper — single-file · no dependency</div>
 </div>
@@ -316,10 +322,13 @@ function setDiff(k){
 
 function fitBoard(){
   var scroll=$('boardScroll');
-  var avail=scroll.clientWidth-24;
-  var c=Math.floor(avail/W);
-  c=Math.min(cfg.cell,c);
-  c=Math.max(18,c);
+  /* 宽度:扣除列间 gap(每列≈2px)+ 内边距 + 边框 */
+  var availW=scroll.clientWidth-(2*W+22);
+  /* 高度:视口高度减去页面其余部分(页头/HUD/按钮/说明等)再扣除行间 gap */
+  var others=document.body.scrollHeight-scroll.offsetHeight;
+  var availH=window.innerHeight-others-(2*H+22)-16;
+  var c=Math.min(cfg.cell,Math.floor(availW/W),Math.floor(availH/H));
+  c=Math.max(14,c);
   boardEl.style.setProperty('--cell',c+'px');
 }
 
@@ -493,6 +502,7 @@ function newGame(){
   boardEl.classList.remove('ended','win');
   $('banner').textContent='';$('banner').className='banner';
   $('genInfo').textContent='';
+  $('noteBox').open=false;   /* 每局收起说明,给棋盘让出高度 */
   setStatus('','READY');
   buildBoard();renderAll();updateHUD();showBest();
 }
