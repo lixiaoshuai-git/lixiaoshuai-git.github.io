@@ -328,8 +328,8 @@ function fitBoard(){
   /* 宽度:扣除列间 gap(每列≈2px)+ 内边距 + 边框 */
   var availW=scroll.clientWidth-(2*W+22);
   var c=Math.min(cfg.cell,Math.floor(availW/W));
-  if(cfg.fitH){   /* 需一屏放下的难度(中级):高度约束,但格子不低于 22px */
-    var cH=Math.floor((availH-(2*H+18))/H);
+  if(cfg.fitH){   /* 框尺寸锚定视口高度(≈95%),小格=框高÷行数,超出部分框内滚动 */
+    var cH=Math.floor((window.innerHeight*0.95-(2*H+18))/H);
     c=Math.min(c,Math.max(22,cH));
   }
   c=Math.max(22,c);
