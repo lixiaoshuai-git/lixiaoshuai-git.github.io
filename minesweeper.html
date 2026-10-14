@@ -297,7 +297,7 @@ function solverSolvable(safe){
 /* ═══════════════ UI 层 ═══════════════ */
 var DIFFS={
   easy:{w:9, h:9, m:10, cell:51},
-  mid: {w:16,h:16,m:40, cell:42, fitH:true},
+  mid: {w:16,h:16,m:40, cell:28},   /* 框总尺寸≈初级框,格子=框÷16 */
   hard:{w:30,h:16,m:99, cell:33}
 };
 var diffKey='easy',cfg=DIFFS.easy;
@@ -322,20 +322,11 @@ function setDiff(k){
 
 function fitBoard(){
   var scroll=$('boardScroll');
-  /* 页面除棋盘区外占用的垂直高度(页头/HUD/按钮/说明等) */
-  var others=document.body.scrollHeight-scroll.offsetHeight;
-  var availH=Math.max(240,window.innerHeight-others-8);
-  /* 宽度:扣除列间 gap(每列≈2px)+ 内边距 + 边框 */
+  /* 格子固定尺寸,仅按容器宽度防溢出;棋盘完整渲染,超出视口由页面滚动 */
   var availW=scroll.clientWidth-(2*W+22);
   var c=Math.min(cfg.cell,Math.floor(availW/W));
-  if(cfg.fitH){   /* 框尺寸锚定视口高度(≈95%),小格=框高÷行数,超出部分框内滚动 */
-    var cH=Math.floor((window.innerHeight*0.95-(2*H+18))/H);
-    c=Math.min(c,Math.max(22,cH));
-  }
-  c=Math.max(22,c);
+  c=Math.max(18,c);
   boardEl.style.setProperty('--cell',c+'px');
-  /* 棋盘超出可视高度时在棋盘区域内滚动,HUD/计时保持可见 */
-  scroll.style.maxHeight=availH+'px';
 }
 
 function buildBoard(){
