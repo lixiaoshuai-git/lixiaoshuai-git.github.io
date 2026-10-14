@@ -297,7 +297,7 @@ function solverSolvable(safe){
 /* ═══════════════ UI 层 ═══════════════ */
 var DIFFS={
   easy:{w:9, h:9, m:10, cell:51},
-  mid: {w:16,h:16,m:40, cell:42},
+  mid: {w:16,h:16,m:40, cell:42, fitH:true},
   hard:{w:30,h:16,m:99, cell:33}
 };
 var diffKey='easy',cfg=DIFFS.easy;
@@ -324,10 +324,12 @@ function fitBoard(){
   var scroll=$('boardScroll');
   /* 宽度:扣除列间 gap(每列≈2px)+ 内边距 + 边框 */
   var availW=scroll.clientWidth-(2*W+22);
-  /* 高度:视口高度减去页面其余部分(页头/HUD/按钮/说明等)再扣除行间 gap */
-  var others=document.body.scrollHeight-scroll.offsetHeight;
-  var availH=window.innerHeight-others-(2*H+22)-16;
-  var c=Math.min(cfg.cell,Math.floor(availW/W),Math.floor(availH/H));
+  var c=Math.min(cfg.cell,Math.floor(availW/W));
+  if(cfg.fitH){   /* 仅需一屏放下的难度(中级)启用高度约束 */
+    var others=document.body.scrollHeight-scroll.offsetHeight;
+    var availH=window.innerHeight-others-(2*H+22)-16;
+    c=Math.min(c,Math.floor(availH/H));
+  }
   c=Math.max(14,c);
   boardEl.style.setProperty('--cell',c+'px');
 }
