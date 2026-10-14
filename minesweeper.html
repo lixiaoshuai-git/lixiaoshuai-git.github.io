@@ -17,7 +17,7 @@
     background:radial-gradient(1200px 600px at 50% -10%,#0a1c0d 0%,var(--bg) 60%);
     color:var(--green); font-family:var(--mono);
     display:flex; flex-direction:column; align-items:center;
-    padding:28px 16px 60px; min-height:100%;
+    padding:20px 16px 36px; min-height:100%;
   }
   /* CRT 扫描线 */
   body::after{
@@ -58,7 +58,7 @@
   .btn-danger:hover{color:var(--red); border-color:var(--red)}
   .hint-keys{font-size:11px; color:#41654a; letter-spacing:.06em; margin-left:auto}
 
-  .board-scroll{overflow:auto; padding:2px; scrollbar-width:thin; scrollbar-color:var(--line) transparent}
+  .board-scroll{overflow:auto; scrollbar-gutter:stable; padding:2px; scrollbar-width:thin; scrollbar-color:var(--line) transparent}
   #board{
     --cell:34px;
     display:grid; gap:2px; width:max-content; margin:0 auto;
@@ -109,7 +109,7 @@
   .note em{color:#7fc08d; font-style:normal}
   .note-body{line-height:2; margin-top:6px; border-top:1px dashed var(--line); padding-top:8px}
   .note .gen-info{color:#41654a; font-size:11px; margin-left:10px}
-  .foot{margin-top:16px; text-align:center; font-size:11px; color:#34503a; letter-spacing:.12em}
+  .foot{margin-top:10px; text-align:center; font-size:11px; color:#34503a; letter-spacing:.12em}
 </style>
 </head>
 <body>
@@ -322,16 +322,20 @@ function setDiff(k){
 
 function fitBoard(){
   var scroll=$('boardScroll');
+  /* 页面除棋盘区外占用的垂直高度(页头/HUD/按钮/说明等) */
+  var others=document.body.scrollHeight-scroll.offsetHeight;
+  var availH=Math.max(240,window.innerHeight-others-8);
   /* 宽度:扣除列间 gap(每列≈2px)+ 内边距 + 边框 */
   var availW=scroll.clientWidth-(2*W+22);
   var c=Math.min(cfg.cell,Math.floor(availW/W));
-  if(cfg.fitH){   /* 仅需一屏放下的难度(中级)启用高度约束 */
-    var others=document.body.scrollHeight-scroll.offsetHeight;
-    var availH=window.innerHeight-others-(2*H+22)-16;
-    c=Math.min(c,Math.floor(availH/H));
+  if(cfg.fitH){   /* 需一屏放下的难度(中级):高度约束,但格子不低于 22px */
+    var cH=Math.floor((availH-(2*H+18))/H);
+    c=Math.min(c,Math.max(22,cH));
   }
-  c=Math.max(14,c);
+  c=Math.max(22,c);
   boardEl.style.setProperty('--cell',c+'px');
+  /* 棋盘超出可视高度时在棋盘区域内滚动,HUD/计时保持可见 */
+  scroll.style.maxHeight=availH+'px';
 }
 
 function buildBoard(){
