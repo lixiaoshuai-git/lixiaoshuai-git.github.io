@@ -252,7 +252,7 @@ const POTIONS={
 };
 
 /* ---------- 装备 ---------- */
-const RARITY={common:{n:"普通",c:"dim"},rare:{n:"稀有",c:"cy"},epic:{n:"史诗",c:"pu"},legendary:{n:"传说",c:"or"}};
+const RARITY={common:{n:"普通",c:"dim",mul:1},rare:{n:"稀有",c:"cy",mul:1.5},epic:{n:"史诗",c:"pu",mul:2},legendary:{n:"传说",c:"or",mul:2.6}};
 const ITEM_BASES={
   weapon:[
     {id:"w1",n:"铁剑",atk:4},{id:"w2",n:"精钢剑",atk:6},{id:"w3",n:"猎人短弓",atk:7,crit:6},
@@ -744,7 +744,7 @@ function enterNode(type){
 function makeEnemy(type,f){
   const sHp=1+(f-1)*0.24,sAtk=1+(f-1)*0.15,sDef=1+(f-1)*0.08;
   function inst(d,hp,atk,def,kind){
-    return {id:d.id,name:d.name,icon:d.icon||"👹",kind,art:d.art||null,
+    return {id:d.id,name:d.n,icon:d.icon||"👹",kind,art:d.art||null,
       hp,maxhp:hp,atk,def,crit:d.crit||5,dodge:d.dodge||0,mv:d.mv,
       xp:Math.round((12+f*6)*(kind==="elite"?1.8:kind==="boss"?4:1)),
       gold:Math.round((15+f*4)*(kind==="elite"?2:kind==="boss"?3:1)*R(0.8,1.2)),
