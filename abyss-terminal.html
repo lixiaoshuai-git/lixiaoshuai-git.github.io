@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深渊终端 ABYSS://TERMINAL — 文字地牢Roguelike</title>
+<style>
+:root{
+  --bg:#04070a; --panel:#0a1410; --panel2:#0d1a13; --line:#1d3a26; --line2:#2c5a3a;
+  --fg:#8dffb0; --fg2:#57e08a; --dim:#3f7a52; --cy:#57e6ff; --yl:#ffd166; --rd:#ff6b6b;
+  --pu:#c77dff; --or:#ffb347; --glow:0 0 6px rgba(87,255,160,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;
+  font-size:14px; line-height:1.55; overflow:hidden;
+}
+#crt{position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  mix-blend-mode:multiply}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:98;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%)}
+@keyframes flick{0%,96%,100%{opacity:.93}97%{opacity:.78}98%{opacity:.9}}
+#app{animation:flick 6s infinite;height:100vh;display:flex;flex-direction:column;max-width:1360px;margin:0 auto;padding:8px 10px;gap:8px}
+header{display:flex;align-items:center;gap:14px;border:1px solid var(--line);background:var(--panel);padding:6px 14px;flex:0 0 auto}
+header .logo{color:var(--cy);font-weight:bold;letter-spacing:2px;text-shadow:0 0 8px rgba(87,230,255,.5)}
+header .flr{color:var(--yl)}
+header .right{margin-left:auto;display:flex;gap:8px}
+main{flex:1;display:grid;grid-template-columns:290px 1fr 290px;gap:8px;min-height:0}
+aside,#center{border:1px solid var(--line);background:var(--panel);padding:10px;overflow-y:auto;min-height:0}
+aside h3{color:var(--cy);font-size:13px;border-bottom:1px dashed var(--line2);padding-bottom:4px;margin:10px 0 6px;letter-spacing:1px}
+aside h3:first-child{margin-top:0}
+.dim{color:var(--dim)} .cy{color:var(--cy)} .yl{color:var(--yl)} .rd{color:var(--rd)}
+.pu{color:var(--pu)} .or{color:var(--or)} .gr{color:var(--fg2)}
+#log{flex:1;overflow-y:auto;padding:6px 2px;min-height:120px;cursor:pointer}
+#log .ln{margin:2px 0;animation:fadein .25s}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
+.m-sys{color:var(--dim)} .m-story{color:var(--fg)} .m-combat{color:#c9ffd8}
+.m-good{color:var(--fg2)} .m-bad{color:var(--rd)} .m-loot{color:var(--cy)} .m-event{color:var(--yl)} .m-boss{color:var(--pu);font-weight:bold}
+#center{display:flex;flex-direction:column}
+#stage{flex:0 0 auto;border-top:1px dashed var(--line2);padding-top:8px}
+.bar{position:relative;height:16px;background:#07120b;border:1px solid var(--line2);margin:3px 0}
+.bar .fill{height:100%;transition:width .3s}
+.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#dfffe9;text-shadow:0 0 3px #000}
+.hp .fill{background:linear-gradient(90deg,#1d8a4a,#37d96f)} .mp .fill{background:linear-gradient(90deg,#1a6f8a,#3fc9e8)}
+.xp .fill{background:linear-gradient(90deg,#8a6f1d,#e8c33f)} .ehp .fill{background:linear-gradient(90deg,#8a1d1d,#e83f3f)}
+.btn{display:inline-block;background:transparent;border:1px solid var(--line2);color:var(--fg);
+  padding:6px 12px;margin:3px 4px 3px 0;cursor:pointer;font-family:inherit;font-size:13px;transition:.12s}
+.btn:hover:not(:disabled){background:var(--fg);color:#04140a;box-shadow:var(--glow)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.big{font-size:15px;padding:10px 18px}
+.btn.cy{border-color:var(--cy);color:var(--cy)} .btn.cy:hover:not(:disabled){background:var(--cy);color:#04140a}
+.btn.rd{border-color:var(--rd);color:var(--rd)} .btn.rd:hover:not(:disabled){background:var(--rd);color:#1a0404}
+.btn.pu{border-color:var(--pu);color:var(--pu)} .btn.pu:hover:not(:disabled){background:var(--pu);color:#12041a}
+.btn.wide{display:block;width:100%;text-align:left;margin:4px 0}
+.enemy-card{border:1px solid var(--line2);background:var(--panel2);padding:10px;margin:6px 0}
+.enemy-card .nm{font-size:16px;color:#ffd9d9}
+.enemy-card pre{color:#ff9d9d;font-size:12px;line-height:1.25;margin:4px 0;text-shadow:0 0 8px rgba(255,80,80,.3)}
+.intent{border:1px dashed var(--or);color:var(--yl);padding:5px 10px;margin:6px 0;display:inline-block}
+.chip{display:inline-block;border:1px solid var(--line2);padding:1px 7px;margin:2px;font-size:12px}
+.chip.b{color:var(--rd);border-color:#5a2c2c} .chip.g{color:var(--fg2)} .chip.s{color:var(--cy);border-color:#2c5a5a}
+.node-opt{display:block;width:100%;text-align:left;border:1px solid var(--line2);background:var(--panel2);
+  color:var(--fg);padding:10px 14px;margin:6px 0;cursor:pointer;font-family:inherit;font-size:14px;transition:.12s}
+.node-opt:hover:not(:disabled){border-color:var(--fg);box-shadow:var(--glow);transform:translateX(3px)}
+.node-opt:disabled{opacity:.4;cursor:not-allowed}
+.node-opt .ic{font-size:18px;margin-right:8px}
+.node-opt small{color:var(--dim)}
+.card{display:inline-block;vertical-align:top;border:1px solid var(--line2);background:var(--panel2);
+  padding:12px;margin:6px;width:200px;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--cy);box-shadow:0 0 12px rgba(87,230,255,.3);transform:translateY(-3px)}
+.card h4{color:var(--cy);margin-bottom:6px}
+.card.locked{opacity:.45;cursor:not-allowed}
+.rl{margin:3px 0;font-size:13px}
+.rl .nm{cursor:help;border-bottom:1px dotted var(--dim)}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.kv b{color:#dfffe9;font-weight:normal;text-align:right}
+#modal{position:fixed;inset:0;background:rgba(2,6,4,.82);z-index:100;display:none;align-items:center;justify-content:center}
+#modal.on{display:flex}
+#modal .box{border:1px solid var(--line2);background:var(--panel);padding:20px;max-width:640px;width:92%;
+  max-height:82vh;overflow-y:auto;box-shadow:0 0 30px rgba(87,255,160,.15)}
+#modal h2{color:var(--cy);border-bottom:1px solid var(--line2);padding-bottom:6px;margin-bottom:10px;font-size:16px;letter-spacing:2px}
+#menu{position:fixed;inset:0;background:var(--bg);z-index:90;display:none;align-items:center;justify-content:center;overflow-y:auto}
+#menu.on{display:flex}
+#menu .inner{width:640px;max-width:94%;padding:20px 0}
+#menu pre.title{color:var(--cy);text-shadow:0 0 14px rgba(87,230,255,.6);font-size:13px;line-height:1.3;margin-bottom:4px}
+.statrow{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+::-webkit-scrollbar{width:8px} ::-webkit-scrollbar-thumb{background:var(--line2)} ::-webkit-scrollbar-track{background:transparent}
+@media (max-width:1050px){ main{grid-template-columns:1fr 1fr} #center{order:-1;grid-column:1/3} aside{max-height:32vh} }
+</style>
+</head>
+<body>
+<div id="crt"></div><div id="vig"></div>
+<div id="app">
+  <header>
+    <span class="logo">ABYSS://TERMINAL</span>
+    <span id="hdr-info" class="dim">文字地牢 Roguelike</span>
+    <div class="right"><span id="hdr-souls" class="pu"></span></div>
+  </header>
+  <main>
+    <aside id="left"></aside>
+    <section id="center">
+      <div id="log" onclick="flushType()"></div>
+      <div id="stage"></div>
+    </section>
+    <aside id="right"></aside>
+  </main>
+</div>
+<div id="menu"></div>
+<div id="modal"><div class="box" id="mbox"></div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   ABYSS://TERMINAL — 深渊终端 · 文字地牢 Roguelike
+   单文件 · 零依赖 · localStorage 自动存档
+   20层主线 + 4 BOSS + 无尽回廊 + 遗产meta成长
+   ============================================================ */
+
+/* ---------- 工具 ---------- */
+const $=s=>document.querySelector(s);
+const R=(a,b)=>a+Math.random()*(b-a);
+const RI=(a,b)=>Math.floor(R(a,b+1));
+const CH=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function WCH(arr){let t=0;for(const a of arr)t+=a.w;let r=Math.random()*t;for(const a of arr){if((r-=a.w)<0)return a;}return arr[arr.length-1];}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=RI(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ---------- META ---------- */
+const META_KEY="abyss_meta_v1",SAVE_KEY="abyss_save_v1";
+function defaultMeta(){return{souls:0,perks:{},ach:{},unlocks:{mage:false,rogue:false},bosses:[],wins:0,runs:0,totalKills:0,deepest:0,gamblesWon:0};}
+let meta=(()=>{try{const m=JSON.parse(localStorage.getItem(META_KEY));if(m)return Object.assign(defaultMeta(),m);}catch(e){}return defaultMeta();})();
+const saveMeta=()=>localStorage.setItem(META_KEY,JSON.stringify(meta));
+const perkLv=id=>meta.perks[id]||0;
+const hasRelic=id=>!!(run&&run.relics.includes(id));
+
+/* ---------- 职业与技能 ---------- */
+const CLASSES={
+  warrior:{name:"剑士",icon:"⚔",desc:"均衡近战。高血量，擅长流血与护盾。",hp:120,mp:30,atk:14,def:6,crit:10,dodge:5,
+    base:["heavy","ironwall"],pool:["whirl","charge","warcry","bloodrage","armorbreak_slash","laststand"]},
+  mage:{name:"法师",icon:"✦",desc:"脆弱但毁灭性的元素使者。擅长灼烧与高倍率爆发。",hp:90,mp:55,atk:11,def:3,crit:12,dodge:8,
+    base:["fireball","magicward"],pool:["frostbolt","thunder","drain","arcane","meteor","elements"]},
+  rogue:{name:"盗贼",icon:"🗡",desc:"暗影猎手。高暴击高闪避，擅长中毒与连击。",hp:100,mp:40,atk:13,def:4,crit:25,dodge:15,
+    base:["backstab","venom"],pool:["shadowstep","smoke","toxicmist","ambush","coin_dagger","vanish"]},
+};
+const SK={
+  heavy:{n:"重斩",mp:8,cd:0,t:"atk",mult:1.8,pl:0.3,foe:{bleed:2,bleedPl:1},d:"180%伤害并施加流血"},
+  ironwall:{n:"铁壁",mp:6,cd:1,t:"def",shieldMul:2.5,shieldPl:0.5,d:"获得护盾(防御×2.5)"},
+  whirl:{n:"旋风斩",mp:12,cd:2,t:"atk",mult:1.5,pl:0.2,foe:{bleed:3,bleedPl:1},d:"150%伤害并施加流血"},
+  charge:{n:"冲锋",mp:10,cd:3,t:"atk",mult:1.3,pl:0.2,foe:{stun:1},d:"130%伤害并眩晕1回合"},
+  warcry:{n:"战吼",mp:8,cd:3,t:"buff",self:{str:3,turns:3},strPl:1,d:"力量+3(3回合)"},
+  bloodrage:{n:"血怒",mp:0,cd:4,t:"buff",costPct:0.12,self:{str:5,turns:3},strPl:1,d:"消耗12%生命，力量+5(3回合)"},
+  armorbreak_slash:{n:"破甲斩",mp:9,cd:2,t:"atk",mult:1.5,pl:0.25,foe:{armorbreak:3,armorbreakPl:1},d:"150%伤害，破甲3回合"},
+  laststand:{n:"不屈",mp:10,cd:4,t:"heal",healPct:0.22,shieldMul:1.5,d:"回复22%生命并获得护盾"},
+  fireball:{n:"火球术",mp:10,cd:0,t:"atk",mult:2.0,pl:0.35,foe:{burn:3,burnPl:1},d:"200%伤害并施加灼烧"},
+  magicward:{n:"魔盾",mp:8,cd:1,t:"def",shieldFlat:16,shieldPl:6,d:"获得护盾(16+6/级)"},
+  frostbolt:{n:"寒冰箭",mp:9,cd:1,t:"atk",mult:1.5,pl:0.2,foe:{slow:2},d:"150%伤害，迟缓2回合"},
+  thunder:{n:"雷击",mp:16,cd:2,t:"atk",mult:2.7,pl:0.4,d:"270%高倍率伤害"},
+  drain:{n:"生命吸取",mp:12,cd:2,t:"atk",mult:1.4,pl:0.2,drain:0.55,d:"140%伤害并回复55%造成值"},
+  arcane:{n:"奥术涌动",mp:8,cd:3,t:"buff",mpGain:10,self:{str:2,turns:3},d:"回复10法力，力量+2(3回合)"},
+  meteor:{n:"陨星术",mp:24,cd:3,t:"atk",mult:3.4,pl:0.4,foe:{burn:4,burnPl:1},d:"340%伤害并施加灼烧"},
+  elements:{n:"元素风暴",mp:14,cd:2,t:"atk",mult:1.6,pl:0.2,foe:{burn:3,poison:3,burnPl:1,poisonPl:1},d:"160%伤害，灼烧+中毒"},
+  backstab:{n:"背刺",mp:7,cd:0,t:"atk",mult:1.6,pl:0.25,critBonus:20,d:"160%伤害，本次暴击率+20%"},
+  venom:{n:"毒刃",mp:8,cd:0,t:"atk",mult:1.2,pl:0.15,foe:{poison:4,poisonPl:1},d:"120%伤害并施加中毒"},
+  shadowstep:{n:"疾影连斩",mp:10,cd:1,t:"atk",hits:2,mult:0.9,pl:0.1,d:"攻击2次，每次90%"},
+  smoke:{n:"烟雾弹",mp:8,cd:3,t:"buff",self:{dodgeup:30,turns:2},d:"闪避+30%(2回合)"},
+  toxicmist:{n:"毒雾",mp:12,cd:2,t:"atk",mult:0.6,pl:0.1,foe:{poison:6,poisonPl:2},d:"60%伤害，施加大量中毒"},
+  ambush:{n:"偷袭",mp:12,cd:2,t:"atk",mult:2.2,pl:0.3,condHiPct:0.6,condBonus:0.6,d:"220%伤害；敌方生命>60%时额外+60%"},
+  coin_dagger:{n:"金币飞刀",mp:8,cd:1,t:"atk",mult:1.4,pl:0.15,steal:true,d:"140%伤害并窃取金币"},
+  vanish:{n:"影遁",mp:10,cd:4,t:"heal",healPct:0.15,self:{dodgeup:20,turns:3},d:"回复15%生命，闪避+20%(3回合)"},
+};
+const LOADOUT_MAX=5;
+
+/* ---------- 敌人 ---------- */
+const ENEMIES=[
+  {id:"goblin",n:"哥布林掠夺者",icon:"👺",hp:30,atk:9,def:1,crit:5,dodge:5,mv:[
+    {n:"猛击",w:6,kind:"atk",mult:1.0},{n:"疯狂挠击",w:4,kind:"atk",mult:0.75}]},
+  {id:"skeleton",n:"骷髅剑士",icon:"💀",hp:34,atk:8,def:4,crit:5,dodge:0,mv:[
+    {n:"斩击",w:6,kind:"atk",mult:1.0},{n:"举盾格挡",w:4,kind:"block",block:5}]},
+  {id:"rat",n:"变异巨鼠",icon:"🐀",hp:26,atk:8,def:1,crit:5,dodge:5,mv:[
+    {n:"疫病啃咬",w:6,kind:"atk",mult:0.9,foe:{poison:2}},{n:"撕裂",w:4,kind:"atk",mult:1.2}]},
+  {id:"bats",n:"蝙蝠群",icon:"🦇",hp:24,atk:7,def:0,crit:5,dodge:15,mv:[
+    {n:"吸血俯冲",w:5,kind:"atk",mult:0.8,leech:0.5},{n:"乱舞",w:5,kind:"atk",mult:1.1}]},
+  {id:"slime",n:"酸液史莱姆",icon:"🟢",hp:42,atk:6,def:2,crit:0,dodge:0,mv:[
+    {n:"酸液喷吐",w:5,kind:"atk",mult:0.8,foe:{armorbreak:2}},{n:"碾压",w:5,kind:"atk",mult:1.0}]},
+  {id:"shadow",n:"暗影潜伏者",icon:"👤",hp:30,atk:10,def:1,crit:15,dodge:10,mv:[
+    {n:"影爪",w:6,kind:"atk",mult:1.1},{n:"潜入阴影",w:2,kind:"buff",self:{dodgeup:15,turns:2}},{n:"暗影突袭",w:2,kind:"atk",mult:1.5}]},
+  {id:"cultist",n:"深渊教徒",icon:"🕯",hp:36,atk:9,def:1,crit:5,dodge:0,mv:[
+    {n:"黑暗诅咒",w:4,kind:"debuff",foe:{weak:2}},{n:"暗影弹",w:5,kind:"atk",mult:1.0},{n:"狂热祈祷",w:2,kind:"buff",self:{str:2,turns:99}}]},
+  {id:"orc",n:"兽人战士",icon:"🪓",hp:46,atk:10,def:3,crit:5,dodge:0,mv:[
+    {n:"战斧挥砍",w:6,kind:"atk",mult:1.1},{n:"愤怒咆哮",w:3,kind:"buff",self:{str:2,turns:99}},{n:"重劈",w:2,kind:"atk",mult:1.4}]},
+  {id:"spider",n:"毒牙蜘蛛",icon:"🕷",hp:32,atk:8,def:1,crit:5,dodge:5,mv:[
+    {n:"毒牙穿刺",w:6,kind:"atk",mult:0.9,foe:{poison:3}},{n:"吐丝缠缚",w:2,kind:"debuff",foe:{slow:2}},{n:"利爪撕扯",w:2,kind:"atk",mult:1.1}]},
+  {id:"ogre",n:"洞穴食人魔",icon:"👹",hp:58,atk:12,def:2,crit:5,dodge:0,mv:[
+    {n:"巨锤猛击",w:6,kind:"atk",mult:1.0},{n:"大地粉碎",w:2,kind:"atk",mult:1.2,foe:{stun:1}},{n:"威慑吼叫",w:2,kind:"buff",self:{str:1,turns:99}}]},
+];
+const ELITE_POOL=["orc","ogre","shadow","spider","skeleton"];
+const BOSSES={
+  5:{id:"stone_guard",n:"石像守卫",hp:200,atk:17,def:8,art:["    ___________","   /           \\","  |   ◉     ◉   |","  |     ___     |","   \\___________/","     /|     |\\     "],mv:[
+    {n:"石拳重击",w:6,kind:"atk",mult:1.2},{n:"岩石硬化",w:3,kind:"block",block:14},{n:"大地震击",w:2,kind:"atk",mult:1.0,foe:{stun:1}}]},
+  10:{id:"abyss_serpent",n:"深渊巨蟒",hp:360,atk:23,def:4,art:["       ~~~~~~~~~","   ~~~<  ●    ●  >~~~","      ( (  ═══  ) )","       ~~~\\___/~~~","        ||     ||    "],mv:[
+    {n:"剧毒獠牙",w:5,kind:"atk",mult:1.0,foe:{poison:4}},{n:"死亡缠绕",w:3,kind:"atk",mult:1.3},{n:"蜕皮再生",w:2,kind:"buff",self:{regen:8,turns:3}},{n:"吞噬",w:2,kind:"atk",mult:1.6}]},
+  15:{id:"wolfking",n:"血月狼王",hp:560,atk:27,def:5,art:["      /\\   /\\   /\\","     /  \\_/  \\_/  \\","    |  ●        ●  |","    |      ω       |","     \\   |‾‾‾|   /","      \\__|    |__/"],mv:[
+    {n:"撕裂之爪",w:5,kind:"atk",mult:1.1,foe:{bleed:3}},{n:"血月嚎叫",w:2,kind:"buff",self:{str:2,turns:99},healPct:0.08},{n:"连爪乱舞",w:3,kind:"atk",hits:2,mult:0.9},{n:"猛扑",w:2,kind:"atk",mult:1.5}]},
+  20:{id:"abyss_lord",n:"深渊之主",hp:900,atk:36,def:7,art:["   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄","  █  ◈        ◈  █","  █    ▄▄▄▄▄▄    █","  █  ▀██████▀   █","   ▀▀▄▄    ▄▄▀▀","      ▀▀▀▀▀▀     "],mv:[
+    {n:"湮灭斩",w:5,kind:"atk",mult:1.2},{n:"深渊低语",w:3,kind:"debuff",foe:{weak:2},alsoPoison:3},{n:"虚空屏障",w:2,kind:"block",block:20},
+    {p2:true,n:"灭世斩",w:5,kind:"atk",mult:1.5},{p2:true,n:"深渊之火",w:3,kind:"atk",mult:1.1,foe:{burn:5}},{p2:true,n:"灵魂虹吸",w:3,kind:"atk",mult:1.3,leech:0.4}]},
+};
+const BOSS_FLOORS=[5,10,15,20];
+
+/* ---------- 遗物 ---------- */
+const RARK={common:0,rare:1,epic:2,legendary:3};
+const RELICS={
+  whet:{n:"磨刀石",d:"攻击力+4",r:"common",mod:{atk:4}},
+  ironw:{n:"铁壁符",d:"防御力+3",r:"common",mod:{def:3}},
+  heart:{n:"心火宝石",d:"最大生命+15",r:"common",mod:{hp:15}},
+  agate:{n:"蓝玛瑙",d:"最大法力+10",r:"common",mod:{mp:10}},
+  hawk:{n:"鹰眼坠",d:"暴击率+8%",r:"common",mod:{crit:8}},
+  bootsr:{n:"疾风徽章",d:"闪避率+8%",r:"common",mod:{dodge:8}},
+  scholar:{n:"学者笔记",d:"战斗胜利后回复8%生命",r:"common"},
+  soulgem:{n:"吸魔水晶",d:"击杀敌人回复12点法力",r:"common"},
+  goldskull:{n:"黄金骷髅",d:"每场战斗胜利额外+15金币",r:"common"},
+  coin:{n:"幸运金币",d:"金币获取+40%",r:"rare"},
+  crystal:{n:"智慧水晶",d:"经验获取+25%",r:"rare"},
+  mask:{n:"狂战面具",d:"生命低于40%时伤害+30%",r:"rare"},
+  glove:{n:"拾荒者手套",d:"战斗后40%概率额外获得药水",r:"rare"},
+  pact:{n:"商人契约",d:"商店价格-20%",r:"rare"},
+  sand:{n:"时之沙",d:"每回合额外回复3点法力",r:"rare"},
+  huntmark:{n:"猎手印记",d:"对精英与BOSS伤害+15%",r:"rare"},
+  purge:{n:"净化吊坠",d:"战斗开始时清除自身负面状态",r:"rare"},
+  thorn:{n:"荆棘护符",d:"被近战命中时反弹4点伤害",r:"rare"},
+  fang:{n:"吸血獠牙",d:"攻击回复造成伤害15%的生命",r:"epic"},
+  jade:{n:"血玉坠饰",d:"每场战斗首次致死伤害改为保留30%生命",r:"epic"},
+  torch:{n:"不灭火炬",d:"免疫灼烧；攻击附加灼烧1",r:"epic"},
+  serpent:{n:"蛇之眼",d:"免疫中毒与流血",r:"epic"},
+  magnet:{n:"战利品磁石",d:"装备掉落率大幅提升",r:"epic"},
+  abysspact:{n:"深渊契约",d:"伤害+25%，但受到伤害+15%",r:"legendary"},
+};
+
+/* ---------- 药水 ---------- */
+const POTIONS={
+  heal:{n:"治疗药水",d:"回复45%最大生命",price:35},
+  mana:{n:"法力药水",d:"回复30点法力",price:30},
+  str:{n:"力量药剂",d:"力量+3(3回合)",price:45},
+  iron:{n:"坚韧药剂",d:"获得护盾(防御+8)",price:45},
+  venom:{n:"毒瓶",d:"对敌人施加中毒6",price:40},
+  bomb:{n:"炸弹",d:"造成(45+3×层数)伤害",price:55},
+  swift:{n:"迅捷药剂",d:"闪避+30%(3回合)",price:45},
+  rage:{n:"狂暴药剂",d:"力量+5(3回合)",price:60},
+};
+
+/* ---------- 装备 ---------- */
+const RARITY={common:{n:"普通",c:"dim"},rare:{n:"稀有",c:"cy"},epic:{n:"史诗",c:"pu"},legendary:{n:"传说",c:"or"}};
+const ITEM_BASES={
+  weapon:[
+    {id:"w1",n:"铁剑",atk:4},{id:"w2",n:"精钢剑",atk:6},{id:"w3",n:"猎人短弓",atk:7,crit:6},
+    {id:"w4",n:"骑士长剑",atk:9},{id:"w5",n:"影刃",atk:9,crit:10,dodge:5},{id:"w6",n:"烈焰法杖",atk:10,burn:1},
+    {id:"w7",n:"屠魔巨斧",atk:12,crit:5},{id:"w8",n:"符文之刃",atk:13},
+    {id:"w9",n:"深渊魔剑",atk:16,lifesteal:0.12,rar:"legendary"},{id:"w10",n:"寒霜权杖",atk:11,slowHit:1},
+  ],
+  armor:[
+    {id:"a1",n:"布甲",def:2,hp:5},{id:"a2",n:"皮甲",def:4},{id:"a3",n:"锁子甲",def:6,hp:8},
+    {id:"a4",n:"学士长袍",def:4,mp:10},{id:"a5",n:"暗影斗篷",def:6,dodge:8},{id:"a6",n:"骑士板甲",def:9,hp:12},
+    {id:"a7",n:"龙鳞铠",def:12,hp:22,rar:"legendary"},{id:"a8",n:"圣银铠甲",def:8,hp:16},
+  ],
+  trinket:[
+    {id:"t1",n:"幸运护符",crit:5},{id:"t2",n:"生命戒指",hp:14},{id:"t3",n:"智慧戒指",mp:8},
+    {id:"t4",n:"疾行靴",dodge:6},{id:"t5",n:"巨力腰带",atk:3,hp:8},{id:"t6",n:"秘法宝珠",mp:12,mpregen:1},
+    {id:"t7",n:"猎鹰之眼",crit:8,atk:2},{id:"t8",n:"深渊之心",hp:28,atk:5,def:4,rar:"legendary"},
+  ]
+};
+const SUB_KEYS=["hp","atk","def","crit","dodge","mp"];
+const SUB_LABEL={hp:"生",atk:"攻",def:"防",crit:"暴",dodge:"闪",mp:"魔",burn:"灼",slow:"缓",lifesteal:"吸",mpregen:"回"};
+
+/* ---------- 遗产 ---------- */
+const PERKS=[
+  {id:"vit",n:"强健体魄",d:"初始最大生命+10",max:3,cost:l=>30+l*30},
+  {id:"atk",n:"锋利本能",d:"初始攻击+2",max:3,cost:l=>30+l*30},
+  {id:"def",n:"钢铁之躯",d:"初始防御+2",max:2,cost:l=>40+l*40},
+  {id:"wealth",n:"财富直觉",d:"初始金币+30",max:3,cost:l=>25+l*25},
+  {id:"xp",n:"智者传承",d:"经验获取+10%",max:3,cost:l=>30+l*30},
+  {id:"potslot",n:"药剂师",d:"药水携带上限+1",max:2,cost:l=>50+l*50},
+  {id:"starter_rel",n:"开局补给",d:"开局获得一件随机遗物",max:1,cost:()=>120},
+  {id:"starter_pot",n:"起始药水",d:"开局获得1瓶随机药水",max:1,cost:()=>40},
+  {id:"shop",n:"商业头脑",d:"商店价格-10%",max:2,cost:l=>45+l*45},
+  {id:"soul",n:"灵魂收割",d:"结算魂晶+15%",max:3,cost:l=>35+l*35},
+];
+
+/* ---------- 成就 ---------- */
+const ACHS=[
+  {id:"a1",n:"初入深渊",d:"到达第3层",s:20,ck:()=>run&&run.floor>=3},
+  {id:"a2",n:"守卫粉碎者",d:"击败第5层BOSS·石像守卫",s:30,ck:()=>meta.bosses.includes(5)},
+  {id:"a3",n:"深渊行者",d:"到达第10层",s:40,ck:()=>run&&run.floor>=10},
+  {id:"a4",n:"蟒蛇猎人",d:"击败第10层BOSS·深渊巨蟒",s:50,ck:()=>meta.bosses.includes(10)},
+  {id:"a5",n:"破晓",d:"击败深渊之主，完成通关",s:200,ck:()=>meta.wins>=1},
+  {id:"a6",n:"无尽探索",d:"无尽模式到达第25层",s:100,ck:()=>run&&run.endless&&run.floor>=25},
+  {id:"a7",n:"百人斩",d:"累计击杀100名敌人",s:60,ck:()=>meta.totalKills>=100},
+  {id:"a8",n:"深渊富豪",d:"单局持有金币达到1000",s:40,ck:()=>run&&run.gold>=1000},
+  {id:"a9",n:"满级大师",d:"单局等级达到15级",s:60,ck:()=>run&&run.level>=15},
+  {id:"a10",n:"收藏家",d:"单局收集5件遗物",s:60,ck:()=>run&&run.relics.length>=5},
+  {id:"a11",n:"赌怪",d:"累计在赌博中获胜3次",s:40,ck:()=>meta.gamblesWon>=3},
+  {id:"a12",n:"药剂大师",d:"单局使用10瓶药水",s:30,ck:()=>run&&run.potionsUsed>=10},
+];
+
+/* ---------- 氛围 ---------- */
+const AMBIENT=[
+  "潮湿的石壁上渗出暗红色的液体，空气里弥漫着铁锈味。",
+  "远处传来某种巨大的、缓慢的呼吸声。",
+  "墙上的苔藓发出幽幽的蓝光，像无数只窥视的眼睛。",
+  "一具抱紧钱袋的骸骨蜷缩在角落，指骨抠进了石头里。",
+  "有人在墙上刻下潦草的字迹：『别相信第13层的商人』。",
+  "温度骤降，你呼出的气息凝成了白霜。",
+  "滴水声以精确的节奏回荡——太精确了，像倒计时。",
+  "一大片萤火虫般的孢子飘过，触碰到皮肤时微微发麻。",
+  "地面上的抓痕一路延伸向深渊更深处。",
+  "你听见细碎的低语，但你确定周围没有任何活物。",
+  "一扇半开的铁门后传出餐具碰撞的声音，然后归于寂静。",
+  "石阶上覆盖着一层黏稠的黑色膜，踩上去咯吱作响。",
+];
+
+/* ============================================================
+   状态
+   ============================================================ */
+let run=null;
+let cb=null;
+let screen="menu";
+let pickedAsc=0;
+let levelUpCache=null;
+let curEvent=null;
+let shop=null;
+let restUsed=false;
+let treasureOpened=false;
+let uidSeq=1;
+
+/* ============================================================
+   日志
+   ============================================================ */
+let typeQ=[],typing=false;
+function log(m,tp){const d=document.createElement("div");d.className="ln m-"+(tp||"sys");d.innerHTML=m;$("#log").appendChild(d);scrollLog();}
+function say(m,tp){typeQ.push({m,tp});pump();}
+function pump(){
+  if(typing||!typeQ.length)return;
+  typing=true;const it=typeQ.shift();
+  const d=document.createElement("div");d.className="ln m-"+(it.tp||"story");$("#log").appendChild(d);
+  let i=0;
+  const iv=setInterval(()=>{i+=2;d.textContent=it.m.slice(0,i);scrollLog();
+    if(i>=it.m.length){clearInterval(iv);typing=false;pump();}},11);
+}
+function flushType(){while(typeQ.length){const it=typeQ.shift();const d=document.createElement("div");d.className="ln m-"+(it.tp||"story");d.textContent=it.m;$("#log").appendChild(d);}scrollLog();}
+function scrollLog(){const l=$("#log");l.scrollTop=l.scrollHeight;}
+function clearLog(){$("#log").innerHTML="";typeQ=[];typing=false;}
+
+/* ============================================================
+   渲染基础
+   ============================================================ */
+const bar=(cur,max,cls)=>{max=Math.max(1,max);const p=clamp(cur/max*100,0,100);
+  return `<div class="bar ${cls}"><div class="fill" style="width:${p}%"></div><span>${Math.max(0,Math.ceil(cur))} / ${Math.ceil(max)}</span></div>`;};
+const BN={bleed:"流血",poison:"中毒",burn:"灼烧",stun:"眩晕",weak:"虚弱",shield:"护盾",str:"力量",regen:"再生",slow:"迟缓",armorbreak:"破甲",dodgeup:"疾风"};
+function chips(buffs){return (buffs||[]).map(b=>`<span class="chip ${b.id==="shield"?"s":(b.id==="str"||b.id==="regen"||b.id==="dodgeup")?"g":"b"}">${BN[b.id]||b.id}+${b.stacks}</span>`).join("");}
+function itemLine(it){
+  const r=RARITY[it.rar];const st=statStr(it);
+  return `<span class="${r.c}">[${r.n}]</span> <span class="nm">${it.name}</span>${st?` <span class="dim">(${st})</span>`:""}`;
+}
+function statStr(it){
+  const b=ITEM_BASES[it.slot].find(x=>x.id===it.base)||{};
+  const parts=[];
+  for(const k of ["atk","def","hp","mp","crit","dodge","burn","slow","lifesteal","mpregen"])
+    if(b[k])parts.push(`${SUB_LABEL[k]}+${b[k]}`);
+  for(const s of it.sub)parts.push(`${SUB_LABEL[s.k]}+${s.v}`);
+  return parts.join(" ");
+}
+function itemStat(it,k){
+  const b=ITEM_BASES[it.slot].find(x=>x.id===it.base)||{};
+  let v=b[k]||0;for(const s of it.sub)if(s.k===k)v+=s.v;return v;
+}
+const RELIC_MOD={atk:{whet:4},def:{ironw:3},hp:{heart:15},mp:{agate:10},crit:{hawk:8},dodge:{bootsr:8}};
+
+/* ---------- 属性 ---------- */
+function calcStat(k){
+  if(!run)return 0;
+  const baseKey=(k==="hp")?"maxhp":(k==="mp")?"maxmp":k;
+  let v=run[baseKey]||0;
+  for(const s of ["weapon","armor","trinket"]){const it=run.equip[s];if(it)v+=itemStat(it,k)||0;}
+  if(RELIC_MOD[k])for(const r of run.relics){const m=RELIC_MOD[k];if(m[r])v+=m[r];}
+  return v;
+}
+const maxHp=()=>calcStat("hp");
+const maxMp=()=>calcStat("mp");
+const buffVal=(list,id)=>{const b=(list||[]).find(x=>x.id===id);return b?b.stacks:0;};
+const getAtk=()=>calcStat("atk")+(cb?buffVal(cb.pBuffs,"str")*3:0);
+function getDef(){let d=calcStat("def");if(cb&&buffVal(cb.pBuffs,"armorbreak"))d*=0.7;return d;}
+const getCrit=()=>clamp(calcStat("crit"),0,75);
+function getDodge(){let d=clamp(calcStat("dodge"),0,60);if(cb)d=clamp(d+buffVal(cb.pBuffs,"dodgeup"),0,85);return d;}
+const mpRegen=()=>{let v=4;for(const s of ["weapon","armor","trinket"]){const it=run&&run.equip[s];if(it)v+=itemStat(it,"mpregen")||0;}if(hasRelic("sand"))v+=3;return v;};
+
+/* ============================================================
+   全量渲染
+   ============================================================ */
+function renderAll(){
+  renderHeader();
+  if(screen==="menu"){hidePanels();renderMenuScreen();return;}
+  showPanels();
+  if(screen==="class"){renderClassScreen();return;}
+  renderLeft();renderRight();renderStage();
+}
+function renderHeader(){
+  if(run){
+    $("#hdr-info").innerHTML=`<span class="flr">第 ${run.floor} 层</span> · ${CLASSES[run.cls].name} Lv.${run.level}${run.endless?' <span class="pu">[无尽]</span>':""}${run.asc?` <span class="pu">爬升${run.asc}</span>`:""}`;
+    $("#hdr-souls").textContent=`魂晶 ${meta.souls}`;
+  }else{$("#hdr-info").textContent="文字地牢 Roguelike";$("#hdr-souls").textContent=meta.souls?`魂晶 ${meta.souls}`:"";}
+}
+function hidePanels(){$("#left").style.display=$("#right").style.display="none";}
+function showPanels(){$("#left").style.display=$("#right").style.display="";}
+
+function renderLeft(){
+  if(!run){$("#left").innerHTML="";return;}
+  const cls=CLASSES[run.cls];
+  let h=`<h3>// 状态</h3>
+  <div class="kv"><span>${cls.icon} ${cls.name} Lv.${run.level}</span><b class="yl">${run.gold} G</b></div>
+  <div class="dim">生命</div>${bar(run.hp,maxHp(),"hp")}
+  <div class="dim">法力</div>${bar(run.mp,maxMp(),"mp")}
+  <div class="dim">经验 (需求${xpNeed()})</div>${bar(run.xp,xpNeed(),"xp")}
+  <h3>// 属性</h3>
+  <div class="kv"><span>攻击</span><b>${getAtk()}</b></div>
+  <div class="kv"><span>防御</span><b>${Math.round(getDef())}</b></div>
+  <div class="kv"><span>暴击率</span><b>${getCrit()}%</b></div>
+  <div class="kv"><span>闪避率</span><b>${getDodge()}%</b></div>
+  <div class="kv"><span>法力回复/回合</span><b>${mpRegen()}</b></div>`;
+  if(cb)h+=`<h3>// 增益/减益</h3><div>${chips(cb.pBuffs)||'<span class="dim">无</span>'}</div>`;
+  h+=`<h3>// 装备</h3>`;
+  for(const s of ["weapon","armor","trinket"]){
+    const it=run.equip[s];
+    const sn={weapon:"武器",armor:"护甲",trinket:"饰品"}[s];
+    h+=`<div class="kv"><span class="dim">${sn}</span><b>${it?itemLine(it):'<span class="dim">空</span>'}</b></div>`;
+    if(it)h+=`<div style="text-align:right"><button class="btn" style="font-size:11px;padding:2px 8px" onclick="unequip('${s}')">卸下</button></div>`;
+  }
+  h+=`<h3>// 背包 (${run.bag.length}/8)</h3>`;
+  if(!run.bag.length)h+=`<div class="dim">空空如也</div>`;
+  run.bag.forEach((it,i)=>{
+    h+=`<div class="rl">${itemLine(it)}
+      <button class="btn" style="font-size:11px;padding:1px 6px" onclick="equipBag(${i})">装备</button>
+      <button class="btn" style="font-size:11px;padding:1px 6px" onclick="sellBag(${i})">卖</button></div>`;
+  });
+  $("#left").innerHTML=h;
+}
+
+function renderRight(){
+  if(!run){$("#right").innerHTML="";return;}
+  let h=`<h3>// 技能 (装备${run.loadout.length}/${LOADOUT_MAX})</h3>`;
+  run.skills.forEach(s=>{
+    const d=SK[s.id];const eq=run.loadout.includes(s.id);
+    const up=s.lv<3?` <span class="yl">Lv${s.lv}</span>`:` <span class="or">Lv.MAX</span>`;
+    h+=`<div class="rl"><span class="nm" title="${esc(d.d)}">${d.n}</span>${up}
+      <span class="dim">${d.mp}MP</span>
+      <button class="btn" style="font-size:11px;padding:1px 6px;${eq?"border-color:var(--cy);color:var(--cy)":""}" onclick="toggleSkill('${s.id}')">${eq?"✓":"装备"}</button></div>
+      <div style="font-size:11px;margin-left:6px;color:var(--dim)">${esc(d.d)}${s.lv>1?` <span class="gr">(Lv${s.lv})</span>`:""}</div>`;
+  });
+  h+=`<h3>// 遗物 (${run.relics.length})</h3>`;
+  if(!run.relics.length)h+=`<div class="dim">尚未获得遗物</div>`;
+  run.relics.forEach(r=>{const d=RELICS[r];const rr=RARITY[d.r];
+    h+=`<div class="rl"><span class="${rr.c}">◆</span> <span class="nm" title="${esc(d.d)}">${d.n}</span> <span class="${rr.c}" style="font-size:11px">${rr.n}</span></div>
+      <div style="font-size:11px;margin-left:12px;color:var(--dim)">${esc(d.d)}</div>`;});
+  h+=`<h3>// 药水 (${run.potions.length}/${potCap()})</h3>`;
+  if(!run.potions.length)h+=`<div class="dim">没有药水</div>`;
+  run.potions.forEach((p,i)=>{const d=POTIONS[p];
+    h+=`<div class="rl">🧪 <span class="nm" title="${esc(d.d)}">${d.n}</span>
+      <button class="btn" style="font-size:11px;padding:1px 6px" onclick="usePotion(${i})">${cb?"使用":"喝"}</button></div>`;});
+  $("#right").innerHTML=h;
+}
+
+/* ============================================================
+   主菜单
+   ============================================================ */
+function renderMenuScreen(){
+  $("#stage").innerHTML="";
+  const canContinue=!!localStorage.getItem(SAVE_KEY);
+  const m=$("#menu");m.classList.add("on");
+  const title=
+`╔═══════════════════════════════════════╗
+║   A B Y S S : // T E R M I N A L      ║
+║        深 渊 终 端   v1.0             ║
+╚═══════════════════════════════════════╝`;
+  m.innerHTML=`<div class="inner">
+    <pre class="title">${title}</pre>
+    <div class="dim" style="margin-bottom:16px">文字地牢 Roguelike · 深渊有二十层，没有人知道第二十一层通向哪里。</div>
+    ${run?`<button class="btn big cy wide" onclick="backToGame()">▸ 返回当前冒险 (第${run.floor}层)</button>`:""}
+    ${canContinue&&!run?`<button class="btn big cy wide" onclick="continueRun()">▸ 继续上次冒险</button>`:""}
+    <button class="btn big wide" onclick="screen='class';renderAll()">▸ 开始新的深渊</button>
+    <button class="btn big wide" onclick="openLegacy()">▸ 遗产终端 [魂晶 ${meta.souls}]</button>
+    <button class="btn big wide" onclick="openStats()">▸ 战绩与成就</button>
+    <button class="btn big wide" onclick="openHelp()">▸ 作战手册</button>
+    ${run?`<button class="btn big rd wide" onclick="abandonRun()">✕ 放弃当前冒险</button>`:""}
+    <div class="statrow" style="margin-top:14px">
+      <span>通关 ${meta.wins}</span><span>冒险 ${meta.runs}</span><span>击杀 ${meta.totalKills}</span><span>最深 ${meta.deepest} 层</span>
+    </div></div>`;
+  clearLog();
+}
+function hideMenu(){$("#menu").classList.remove("on");}
+function backToGame(){screen="game";hideMenu();renderAll();}
+function openHelp(){
+  $("#modal").classList.add("on");
+  $("#mbox").innerHTML=`<h2>作战手册</h2>
+  <div style="line-height:1.8">
+  <p><span class="cy">▸ 目标</span>：从第1层深入到第20层，击败盘踞的【深渊之主】。20层之后是无尽回廊。</p>
+  <p><span class="cy">▸ 每层</span>：从 2-3 条路径中选择一条——战斗/精英/事件/商店/休整/宝箱。第 5/10/15/20 层固定为BOSS。</p>
+  <p><span class="cy">▸ 战斗</span>：回合制。敌人会显示<span class="yl">意图</span>，据此决定防御、爆发或控场。技能消耗法力，法力每回合回复。</p>
+  <p><span class="cy">▸ 状态</span>：流血/中毒/灼烧持续掉血；眩晕跳过行动；破甲/虚弱削弱目标；护盾优先抵消伤害。</p>
+  <p><span class="cy">▸ 成长</span>：升级三选一(新技能/强化技能/属性)；遗物提供Build核心被动；装备分4稀有度并带随机词条。</p>
+  <p><span class="cy">▸ 死亡</span>：冒险结束，但根据深度与击杀获得<span class="pu">魂晶</span>——在遗产终端购买永久强化，越死越强。</p>
+  <p><span class="cy">▸ 热键</span>：A 攻击 · 1-5 技能 · Q 药水 · ESC 菜单。点击日志区可跳过打字机动画。</p>
+  <p><span class="cy">▸ 解锁</span>：击败深渊巨蟒→法师；单局到达15层→盗贼。首次通关开启无尽回廊。</p>
+  <p class="dim">▸ 进度自动保存在浏览器 localStorage，随时关页面，下次继续。</p></div>
+  <div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeModal()">知道了</button></div>`;
+}
+function closeModal(){$("#modal").classList.remove("on");}
+
+function openLegacy(){
+  $("#modal").classList.add("on");
+  let h=`<h2>遗产终端 // 魂晶 ${meta.souls}</h2>
+  <div class="dim" style="margin-bottom:8px">魂晶在冒险结束时结算，死亡不白给。永久强化跨局生效。</div>`;
+  for(const p of PERKS){
+    const lv=perkLv(p.id);const maxed=lv>=p.max;const cost=p.cost(lv);
+    h+=`<div class="kv"><span>${p.n} <span class="dim">Lv.${lv}/${p.max}</span><br><span style="font-size:12px;color:var(--dim)">${p.d}</span></span>
+      ${maxed?'<b class="or">MAX</b>':`<button class="btn" ${meta.souls<cost?"disabled":""} onclick="buyPerk('${p.id}',${cost})">${cost} 魂晶</button>`}</div>`;
+  }
+  h+=`<div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeModal()">关闭</button></div>`;
+  $("#mbox").innerHTML=h;
+}
+function buyPerk(id,cost){if(meta.souls<cost)return;meta.souls-=cost;meta.perks[id]=perkLv(id)+1;saveMeta();openLegacy();}
+
+function openStats(){
+  $("#modal").classList.add("on");
+  let h=`<h2>战绩与成就</h2>
+  <div class="statrow" style="margin-bottom:10px">
+    <span>通关 <b class="cy">${meta.wins}</b></span><span>总冒险 <b class="cy">${meta.runs}</b></span>
+    <span>总击杀 <b class="cy">${meta.totalKills}</b></span><span>最深记录 <b class="cy">${meta.deepest}</b> 层</span>
+    <span>魂晶 <b class="pu">${meta.souls}</b></span></div>
+  <h3 style="color:var(--cy)">职业解锁</h3>
+  <div class="dim">法师：${meta.unlocks.mage?'<span class="gr">已解锁</span>':'击败第10层BOSS后解锁'} · 盗贼：${meta.unlocks.rogue?'<span class="gr">已解锁</span>':'单局到达第15层后解锁'}</div>
+  <h3 style="color:var(--cy)">成就 (${Object.keys(meta.ach).length}/${ACHS.length})</h3>`;
+  for(const a of ACHS){
+    const got=meta.ach[a.id];
+    h+=`<div class="kv"><span>${got?'<span class="gr">[✓]</span>':'<span class="dim">[ ]</span>'} ${a.n} <span style="font-size:12px;color:var(--dim)">${a.d}</span></span><b class="pu">+${a.s}</b></div>`;
+  }
+  h+=`<div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeModal()">关闭</button></div>`;
+  $("#mbox").innerHTML=h;
+}
+function checkAch(){
+  let got=false;
+  for(const a of ACHS){
+    if(!meta.ach[a.id]&&a.ck()){meta.ach[a.id]=true;meta.souls+=a.s;got=true;
+      log(`🏆 成就达成：<b>${a.n}</b> — ${a.d}（魂晶+${a.s}）`,"loot");}
+  }
+  if(got)saveMeta();
+  renderHeader();
+}
+
+/* ---------- 职业选择 ---------- */
+function renderClassScreen(){
+  hideMenu();
+  const ascMax=meta.wins>0?Math.min(5,meta.wins):0;
+  let h=`<h3 style="color:var(--cy)">// 选择你的职业</h3>`;
+  for(const key of Object.keys(CLASSES)){
+    const c=CLASSES[key];
+    const locked=(key==="mage"&&!meta.unlocks.mage)||(key==="rogue"&&!meta.unlocks.rogue);
+    h+=`<div class="card ${locked?"locked":""}" ${locked?"":`onclick="pickClass('${key}')"`}>
+      <h4>${c.icon} ${c.name}${locked?' 🔒':''}</h4>
+      <div class="dim" style="font-size:12px">${c.desc}</div>
+      <div class="statrow" style="margin-top:6px">
+        <span>HP ${c.hp}</span><span>MP ${c.mp}</span><span>攻 ${c.atk}</span><span>防 ${c.def}</span>
+        <span>暴击 ${c.crit}%</span><span>闪避 ${c.dodge}%</span></div>
+      ${locked?`<div class="rd" style="font-size:11px;margin-top:6px">${key==="mage"?"击败第10层BOSS解锁":"单局到达第15层解锁"}</div>`:""}
+    </div>`;
+  }
+  if(ascMax>0){
+    h+=`<div style="margin-top:10px"><h3 style="color:var(--pu)">// 爬升难度 (通关后解锁)</h3>
+    <span class="dim">难度：</span>`;
+    for(let i=0;i<=ascMax;i++)h+=`<button class="btn ${pickedAsc===i?"cy":""}" onclick="pickedAsc=${i};renderAll()">${i===0?"普通":`爬升${i}`}</button>`;
+    h+=`<div class="dim" style="font-size:12px;margin-top:4px">每级爬升：敌人属性+12%，结算魂晶+10%。</div></div>`;
+  }
+  h+=`<div style="margin-top:14px"><button class="btn" onclick="screen='menu';renderAll()">◂ 返回</button></div>`;
+  $("#stage").innerHTML=h;$("#log").innerHTML="";
+}
+function pickClass(key){newRun(key,pickedAsc);}
+
+/* ============================================================
+   开局 / 存档
+   ============================================================ */
+function potCap(){return 3+perkLv("potslot");}
+const xpNeed=()=>18+run.level*12;
+
+function newRun(cls,asc){
+  const c=CLASSES[cls];
+  run={cls,asc:asc||0,floor:0,phase:"node",node:null,
+    level:1,xp:0,gold:0,
+    maxhp:c.hp+10*perkLv("vit"),maxmp:c.mp,
+    atk:c.atk+2*perkLv("atk"),def:c.def+2*perkLv("def"),
+    crit:c.crit,dodge:c.dodge,
+    hp:1,mp:0,
+    skills:c.base.map(id=>({id,lv:1})),loadout:c.base.slice(),
+    equip:{weapon:null,armor:null,trinket:null},bag:[],potions:[],relics:[],
+    kills:0,potionsUsed:0,bossKills:0,lastShop:0,lastRest:0,
+    eventPool:shuffle(EVENTS.map(e=>e.id)),pending:0,endless:false,
+    nodeOpts:null,nodeOptsFloor:0,
+    started:Date.now()};
+  run.gold=30*perkLv("wealth");
+  if(perkLv("starter_rel"))gainRelic(randRelic(0),true);
+  if(perkLv("starter_pot"))gainPotion(CH(["heal","mana","str","iron"]));
+  run.hp=maxHp();run.mp=maxMp();
+  meta.runs++;saveMeta();
+  screen="game";hideMenu();clearLog();
+  say("> 接入深渊终端……连接建立。","sys");
+  say(`> 职业：${c.name}。爬升难度：${asc||0}。`,"sys");
+  say("你在一阵天旋地转后睁开眼，发现自己躺在冰冷石阶的底部。头顶的入口已经消失，只有一条向下的甬道泛着微光。","story");
+  log("提示：ESC 打开菜单查看作战手册；进度自动保存。","sys");
+  nextFloor();
+}
+function saveRun(){if(run)localStorage.setItem(SAVE_KEY,JSON.stringify(run));}
+function clearSave(){localStorage.removeItem(SAVE_KEY);}
+function continueRun(){
+  try{run=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){run=null;}
+  if(!run){screen="menu";renderAll();return;}
+  screen="game";hideMenu();clearLog();
+  say("> 恢复存档……连接建立。","sys");
+  log(`欢迎回来，${CLASSES[run.cls].name}。当前第${run.floor}层。`,"sys");
+  const ph=run.phase;
+  if(ph==="combat"){enterNode(["battle","elite","boss"].includes(run.node)?run.node:"battle");return;}
+  if(ph==="shop"){openShop();return;}
+  if(ph==="rest"){restUsed=false;openRest();return;}
+  if(ph==="treasure"){treasureOpened=false;openTreasure();return;}
+  if(ph==="event"){startEvent();return;}
+  run.phase="node";run.nodeOpts=null;renderAll();
+}
+function abandonRun(){
+  if(!confirm("确定放弃当前冒险？该局进度将丢失（魂晶结算一半）。"))return;
+  const souls=Math.floor(calcSouls()*0.5);meta.souls+=souls;saveMeta();clearSave();run=null;cb=null;
+  screen="menu";renderAll();
+}
+
+/* ============================================================
+   楼层流程
+   ============================================================ */
+function nextFloor(){
+  run.floor++;
+  if(run.floor>=15&&!meta.unlocks.rogue){meta.unlocks.rogue=true;saveMeta();log("🔓 职业解锁：盗贼！","loot");}
+  arriveFloor();
+}
+function arriveFloor(){
+  run.phase="node";run.node=null;run.nodeOpts=null;
+  run.mp=maxMp();
+  if(run.hp<=0)run.hp=1;
+  if(run.floor>meta.deepest){meta.deepest=run.floor;saveMeta();}
+  checkAch();
+  say(`────── 第 ${run.floor} 层 ──────`,"sys");
+  if(Math.random()<0.75)say(AMBIENT[RI(0,AMBIENT.length-1)]);
+  saveRun();
+  renderAll();
+}
+function genNodes(){
+  const f=run.floor;
+  if(f===1||f===2)return[{type:"battle",label:"甬道深处传来脚步声"}];
+  if(BOSS_FLOORS.includes(f))return[{type:"boss"}];
+  if(f>20&&f%5===0)return[{type:"boss",endless:true}];
+  let w=[["battle",52],["event",14],["shop",8],["rest",9],["treasure",6]];
+  if(f>=3)w.push(["elite",14]);
+  const opts=[];
+  if(f-run.lastShop>7)opts.push({type:"shop"});
+  if(f-run.lastRest>6)opts.push({type:"rest"});
+  const pool=w.filter(x=>!opts.some(o=>o.type===x[0]));
+  const target=RI(2,3);
+  while(opts.length<target){
+    const t=WCH(pool.map(([k,v])=>({k,v}))).k;
+    if(!opts.some(o=>o.type===t))opts.push({type:t});
+    else{
+      const rest=pool.map(p=>p[0]).filter(x=>!opts.some(o=>o.type===x));
+      if(!rest.length)break;
+      opts.push({type:CH(rest)});
+    }
+  }
+  return opts;
+}
+const NODE_META={
+  battle:{ic:"⚔",n:"遭遇战",d:"普通敌人。稳定经验与战利品。"},
+  elite:{ic:"💀",n:"精英强敌",d:"强大的变异体。掉落更好，可能掉遗物。"},
+  event:{ic:"❓",n:"未知遭遇",d:"地牢的怪谈在等待。机遇与陷阱并存。"},
+  shop:{ic:"🛒",n:"流动商人",d:"用金币换补给。也许还能治伤。"},
+  rest:{ic:"⛺",n:"安全营地",d:"休整恢复，或锻炼强化自身。"},
+  treasure:{ic:"🎁",n:"无人宝箱",d:"没人守着的箱子——通常没那么简单。"},
+  boss:{ic:"☠",n:"深渊魔王",d:"本区域的统治者。胜利将获得丰厚奖励。"},
+};
+function renderStage(){
+  const st=$("#stage");
+  if(!run||screen!=="game"){st.innerHTML="";return;}
+  if(run.phase==="node")return renderNodeChoice(st);
+  if(run.phase==="combat")return renderCombatStage(st);
+  if(run.phase==="event")return renderEventStage(st);
+  if(run.phase==="event_done")return renderEventDone();
+  if(run.phase==="shop")return renderShop();
+  if(run.phase==="rest")return renderRestStage(st);
+  if(run.phase==="treasure")return renderTreasureStage(st);
+  if(run.phase==="loot"){st.innerHTML="";showContinue();return;}
+}
+function renderNodeChoice(st){
+  let opts;
+  if(run.nodeOpts&&run.nodeOptsFloor===run.floor)opts=run.nodeOpts;
+  else{opts=genNodes();run.nodeOpts=opts;run.nodeOptsFloor=run.floor;saveRun();}
+  let h=`<div class="dim">// 选择前进路径</div>`;
+  opts.forEach((o,i)=>{
+    const m=NODE_META[o.type];
+    const bossName=(o.type==="boss")?(run.floor>20?"深渊之影":(BOSSES[run.floor]?BOSSES[run.floor].n:"")):"";
+    h+=`<button class="node-opt" onclick="chooseNode(${i})">
+      <span class="ic">${m.ic}</span><b>${m.n}</b> ${o.type==="boss"?`<span class="rd">【${bossName}】</span>`:""}
+      <br><small>${o.label?esc(o.label)+" — ":""}${m.d}</small></button>`;
+  });
+  h+=`<button class="btn" onclick="openPotionModal(true)">🧪 使用药水</button>`;
+  st.innerHTML=h;
+}
+function chooseNode(i){
+  const o=(run.nodeOpts||[])[i];if(!o)return;
+  enterNode(o.type);
+}
+function enterNode(type){
+  run.node=type;
+  if(type==="battle"||type==="elite"||type==="boss"){
+    if(type==="boss"&&run.hp<maxHp()){
+      const h=Math.round(maxHp()*0.35);
+      run.hp=Math.min(maxHp(),run.hp+h);
+      log(`BOSS房前的深渊泉水恢复了你的 ${h} 点生命。`,"good");
+    }
+    run.phase="combat";saveRun();startCombat(type);
+  }
+  else if(type==="event"){run.phase="event";saveRun();startEvent();}
+  else if(type==="shop"){run.phase="shop";run.lastShop=run.floor;saveRun();openShop();}
+  else if(type==="rest"){run.phase="rest";run.lastRest=run.floor;restUsed=false;saveRun();openRest();}
+  else if(type==="treasure"){run.phase="treasure";treasureOpened=false;saveRun();openTreasure();}
+  renderAll();
+}
+
+/* ============================================================
+   战斗
+   ============================================================ */
+function makeEnemy(type,f){
+  const sHp=1+(f-1)*0.24,sAtk=1+(f-1)*0.15,sDef=1+(f-1)*0.08;
+  function inst(d,hp,atk,def,kind){
+    return {id:d.id,name:d.name,icon:d.icon||"👹",kind,art:d.art||null,
+      hp,maxhp:hp,atk,def,crit:d.crit||5,dodge:d.dodge||0,mv:d.mv,
+      xp:Math.round((12+f*6)*(kind==="elite"?1.8:kind==="boss"?4:1)),
+      gold:Math.round((15+f*4)*(kind==="elite"?2:kind==="boss"?3:1)*R(0.8,1.2)),
+      buffs:[],phase2:false};
+  }
+  if(type==="battle"){
+    const d=CH(ENEMIES);
+    return inst(d,Math.round(d.hp*sHp),Math.round(d.atk*sAtk),Math.round(d.def*sDef),"battle");
+  }
+  if(type==="elite"){
+    const d=CH(ELITE_POOL.map(id=>ENEMIES.find(e=>e.id===id)));
+    const e=inst(d,Math.round(d.hp*sHp*1.7),Math.round(d.atk*sAtk*1.35),Math.round(d.def*sDef*1.3),"elite");
+    e.name="精英·"+e.name;e.icon="☠";return e;
+  }
+  if(type==="event_boss"){
+    const d=ENEMIES.find(e=>e.id==="cultist");
+    const e=inst(d,Math.round(d.hp*sHp*2.2),Math.round(d.atk*sAtk*1.4),Math.round(d.def*sDef),"elite");
+    e.name="深渊贵族";e.icon="🧛";return e;
+  }
+  if(type==="boss"){
+    const def=(f<=20&&BOSSES[f])||BOSSES[20];
+    let e=inst(def,def.hp,def.atk,def.def,"boss");
+    if(f>20){const k=f-20;e.hp=Math.round(e.hp*(1+k*0.07));e.maxhp=e.hp;e.atk=Math.round(e.atk*(1+k*0.05));e.name="深渊之影·Lv"+k;}
+    return e;
+  }
+  if(type==="mirror"){
+    return {id:"mirror",name:"镜中的你",icon:"🪞",kind:"elite",art:null,
+      hp:Math.round(maxHp()*1.15),maxhp:Math.round(maxHp()*1.15),
+      atk:Math.round(getAtk()*0.9),def:Math.round(calcStat("def")*0.8),
+      crit:getCrit(),dodge:Math.min(30,getDodge()),mv:[
+        {n:"斩击",w:6,kind:"atk",mult:1.0},{n:"镜像闪避",w:2,kind:"buff",self:{dodgeup:20,turns:2}},{n:"致命一击",w:2,kind:"atk",mult:1.5}],
+      xp:Math.round((12+f*6)*1.8),gold:RI(40,80)+f*4,buffs:[],phase2:false};
+  }
+}
+function startCombat(kind){
+  const e=makeEnemy(kind,run.floor);
+  cb={e,turn:1,cds:{},pBuffs:[],busy:false,over:false,reviveUsed:false};
+  if(kind==="boss"){
+    say("！！警告：强大的存在正在苏醒！！","boss");
+    log(`<pre style="margin:0">${esc(e.art?e.art.join("\n"):"")}</pre>`,"boss");
+    log(`☠ <b>${e.name}</b> 挡住了去路！`,"boss");
+  }else{
+    log(`${e.icon} <b>${e.name}</b> 出现了！`,"combat");
+  }
+  if(hasRelic("purge")){
+    cb.pBuffs=cb.pBuffs.filter(b=>!["bleed","poison","burn","weak","armorbreak","slow","stun"].includes(b.id));
+    log("净化吊坠驱散了负面状态。","good");
+  }
+  pickIntent();
+  run.phase="combat";renderAll();
+}
+function pickIntent(){
+  const e=cb.e;
+  let pool=e.mv.filter(m=>!m.p2||e.phase2);
+  if(!pool.length)pool=e.mv;
+  cb.intent=WCH(pool);
+}
+function eStr(){return buffVal(cb.e.buffs,"str")*3;}
+function intentText(){
+  const mv=cb.intent;if(!mv)return "";
+  if(mv.kind==="atk"){
+    let raw=(cb.e.atk+eStr())*mv.mult;
+    let est=raw*100/(100+getDef());
+    return `⚔ ${mv.n} ≈${Math.round(est)}`;
+  }
+  if(mv.kind==="block")return `🛡 ${mv.n}`;
+  if(mv.kind==="buff")return `✦ ${mv.n}`;
+  if(mv.kind==="debuff")return `☠ ${mv.n}`;
+  return mv.n;
+}
+function renderCombatStage(st){
+  const e=cb.e;
+  let h=`<div class="enemy-card">
+    <div class="nm">${e.icon} ${e.name} <span class="dim">${e.kind==="boss"?"[BOSS]":e.kind==="elite"?"[精英]":""}</span></div>
+    ${e.art?`<pre>${esc(e.art.join("\n"))}</pre>`:""}
+    ${bar(e.hp,e.maxhp,"ehp")}
+    <div>${chips(e.buffs)}</div>
+    <div class="intent">意图 → ${intentText()}</div>
+  </div>
+  <div style="margin-top:6px">
+    <button class="btn big" onclick="useBasic()">⚔ 攻击 <small class="dim">[A]</small></button>`;
+  run.loadout.forEach((id,i)=>{
+    const d=SK[id];const cd=cb.cds[id]||0;const noMp=run.mp<d.mp;const dis=cd>0||noMp||cb.busy;
+    const lv=run.skills.find(s=>s.id===id).lv;
+    h+=`<button class="btn ${noMp?"rd":""}" ${dis?"disabled":""} onclick="useSkill('${id}')" title="${esc(d.d)}">
+      [${i+1}] ${d.n} <small class="dim">${d.mp}MP${cd>0?` CD${cd}`:""} Lv${lv}</small></button>`;
+  });
+  h+=`<button class="btn" onclick="openPotionModal()">🧪 药水 [Q]</button>`;
+  if(cb.e.kind!=="boss")h+=`<button class="btn rd" onclick="tryFlee()">🏃 逃跑</button>`;
+  h+=`</div>`;
+  st.innerHTML=h;
+}
+
+/* --- 玩家行动 --- */
+function useBasic(){playerAct(()=>{doAttack(1.0,"挥击",{});});}
+function useSkill(id){
+  const s=run.skills.find(x=>x.id===id);const d=SK[id];
+  if(!s||run.mp<d.mp||(cb.cds[id]||0)>0)return;
+  playerAct(()=>{
+    run.mp-=d.mp;cb.cds[id]=d.cd+1;
+    const lv=s.lv;
+    log(`你施展【${d.n}】(Lv${lv})`,"combat");
+    if(d.t==="atk"){
+      let mult=(d.mult||0)+(d.pl||0)*(lv-1);
+      if(d.condHiPct&&cb.e.hp/cb.e.maxhp>d.condHiPct)mult+=d.condBonus||0;
+      const hits=d.hits||1;
+      for(let i=0;i<hits;i++){
+        doAttack(mult,`${d.n}${hits>1?"·第"+(i+1)+"段":""}`,{critBonus:d.critBonus||0,drain:d.drain||0});
+        if(!cb||cb.over)break;
+      }
+    }else if(d.t==="def"){
+      const sh=d.shieldMul?Math.round(getDef()*d.shieldMul+(d.shieldPl||0)*(lv-1)):Math.round((d.shieldFlat||0)+(d.shieldPl||0)*(lv-1));
+      addBuff(cb.pBuffs,"shield",sh,99);log(`获得 ${sh} 点护盾。`,"good");
+    }else if(d.t==="buff"){
+      if(d.costPct){const c=Math.round(maxHp()*d.costPct);run.hp=Math.max(1,run.hp-c);log(`付出 ${c} 点生命。`,"bad");}
+      if(d.mpGain){run.mp=Math.min(maxMp(),run.mp+d.mpGain);log(`回复 ${d.mpGain} 点法力。`,"good");}
+      if(d.self){
+        const str=(d.self.str||0)+((d.strPl||0)*(lv-1));
+        if(str)addBuff(cb.pBuffs,"str",str,d.self.turns);
+        if(d.self.dodgeup)addBuff(cb.pBuffs,"dodgeup",d.self.dodgeup,d.self.turns);
+        if(d.self.regen)addBuff(cb.pBuffs,"regen",d.self.regen,d.self.turns);
+        log("力量提升了。","good");
+      }
+    }else if(d.t==="heal"){
+      const heal=Math.round(maxHp()*(d.healPct||0));
+      run.hp=Math.min(maxHp(),run.hp+heal);log(`回复 ${heal} 点生命。`,"good");
+      if(d.shieldMul){const sh=Math.round(getDef()*d.shieldMul);addBuff(cb.pBuffs,"shield",sh,99);log(`获得 ${sh} 点护盾。`,"good");}
+      if(d.self&&d.self.dodgeup)addBuff(cb.pBuffs,"dodgeup",d.self.dodgeup,d.self.turns);
+    }
+    if(d.foe&&cb&&!cb.over)applyFoeBuffs(d.foe,lv,d);
+  });
+}
+function doAttack(mult,label,opt){
+  if(!cb||cb.over)return;
+  const e=cb.e;opt=opt||{};
+  if(Math.random()*100<e.dodge){log(`${e.name} 闪开了你的攻击！`,"bad");return;}
+  let dmg=getAtk()*mult*R(0.9,1.1);
+  const isCrit=Math.random()*100<getCrit()+(opt.critBonus||0);
+  if(isCrit)dmg*=1.6;
+  if(buffVal(cb.pBuffs,"weak"))dmg*=0.75;
+  if(hasRelic("abysspact"))dmg*=1.25;
+  if(hasRelic("mask")&&run.hp/maxHp()<0.4)dmg*=1.3;
+  if((e.kind==="elite"||e.kind==="boss")&&hasRelic("huntmark"))dmg*=1.15;
+  let def=e.def;if(buffVal(e.buffs,"armorbreak"))def*=0.7;
+  dmg*=100/(100+def);
+  dmg=Math.max(1,Math.round(dmg));
+  // 敌方护盾吸收
+  const esh=e.buffs.find(b=>b.id==="shield");
+  if(esh&&esh.stacks>0){
+    const ab=Math.min(esh.stacks,dmg);esh.stacks-=ab;dmg-=ab;
+    if(esh.stacks<=0)e.buffs=e.buffs.filter(b=>b.stacks>0);
+    if(ab>0)log(`${e.name} 的护盾抵消了 ${ab} 点伤害。`,"cy");
+  }
+  if(dmg>0){
+    e.hp-=dmg;
+    log(`你${label}命中 ${e.name}，造成 <b class="yl">${dmg}</b>${isCrit?' <b class="or">暴击!</b>':""} 伤害。`,"combat");
+    if(hasRelic("fang")){const h=Math.max(1,Math.round(dmg*0.15));run.hp=Math.min(maxHp(),run.hp+h);log(`吸血獠牙回复 ${h} 点生命。`,"good");}
+    if(opt.drain){const h=Math.round(dmg*opt.drain);run.hp=Math.min(maxHp(),run.hp+h);log(`吸取 ${h} 点生命。`,"good");}
+    const w=run.equip.weapon;
+    if(w){
+      const ls=itemStat(w,"lifesteal");
+      if(ls){const h=Math.round(dmg*ls);run.hp=Math.min(maxHp(),run.hp+h);}
+      if(itemStat(w,"burn"))addBuff(e.buffs,"burn",1,2);
+      if(itemStat(w,"slowHit"))addBuff(e.buffs,"slow",1,2);
+    }
+    if(hasRelic("torch"))addBuff(e.buffs,"burn",1,2);
+  }
+  if(e.hp<=0){e.hp=0;onVictory();}
+}
+function applyFoeBuffs(foe,lv,d){
+  const e=cb.e;if(!e)return;
+  const pl=k=>((d&&d.foe&&d.foe[k+"Pl"])?d.foe[k+"Pl"]:1)*(lv-1||0);
+  if(foe.bleed){addBuff(e.buffs,"bleed",foe.bleed+pl("bleed"),3);log(`${e.name} 开始流血！`,"good");}
+  if(foe.poison){addBuff(e.buffs,"poison",foe.poison+pl("poison"),3);log(`${e.name} 中毒了！`,"good");}
+  if(foe.burn){addBuff(e.buffs,"burn",foe.burn+pl("burn"),3);log(`${e.name} 被点燃了！`,"good");}
+  if(foe.weak){addBuff(e.buffs,"weak",foe.weak,foe.weak);log(`${e.name} 虚弱了！`,"good");}
+  if(foe.armorbreak){addBuff(e.buffs,"armorbreak",foe.armorbreak,foe.armorbreak);log(`${e.name} 的防御被击碎！`,"good");}
+  if(foe.stun){addBuff(e.buffs,"stun",1,1);log(`${e.name} 被眩晕！`,"good");}
+  if(foe.slow){addBuff(e.buffs,"slow",1,foe.slow);log(`${e.name} 的动作迟缓了！`,"good");}
+}
+function addBuff(list,id,stacks,turns){
+  const b=list.find(x=>x.id===id);
+  if(b){
+    b.stacks=(id==="shield")?b.stacks+stacks:Math.max(b.stacks,stacks);
+    b.turns=Math.max(b.turns,turns);
+  }else list.push({id,stacks,turns});
+}
+function playerAct(fn){
+  if(!cb||cb.over||cb.busy)return;
+  cb.busy=true;
+  fn();
+  if(!cb||cb.over){renderAll();return;}
+  renderAll();
+  setTimeout(enemyPhase,420);
+}
+function enemyPhase(){
+  if(!cb||cb.over)return;
+  const e=cb.e;
+  if(tickDots(e.buffs,"enemy")){onVictory();return;}
+  const erg=e.buffs.find(b=>b.id==="regen");
+  if(erg)e.hp=Math.min(e.maxhp,e.hp+erg.stacks);
+  const stunB=e.buffs.find(b=>b.id==="stun");
+  if(stunB){e.buffs=e.buffs.filter(b=>b.id!=="stun");log(`${e.name} 眩晕中，无法行动！`,"good");}
+  else if(e.buffs.find(b=>b.id==="slow")&&(cb.turn%2===0)){log(`${e.name} 被迟缓，本回合无法行动。`,"good");}
+  else{
+    if(e.kind==="boss"&&e.id==="abyss_lord"&&!e.phase2&&e.hp/e.maxhp<=0.5){
+      e.phase2=true;addBuff(e.buffs,"str",4,99);
+      log(`<b class="pu">深渊之主发出震彻地牢的咆哮——第二形态！力量大幅提升！</b>`,"boss");
+    }
+    enemyAct();
+    if(!cb||cb.over)return;
+  }
+  decayBuffs(e.buffs);
+  cb.turn++;
+  pickIntent();
+  beginPlayerTurn();
+}
+function beginPlayerTurn(){
+  if(!cb||cb.over)return;
+  if(tickDots(cb.pBuffs,"player")){onDeath();return;}
+  const rg=cb.pBuffs.find(b=>b.id==="regen");
+  if(rg)run.hp=Math.min(maxHp(),run.hp+rg.stacks);
+  run.mp=Math.min(maxMp(),run.mp+mpRegen());
+  for(const k in cb.cds)if(cb.cds[k]>0)cb.cds[k]--;
+  decayBuffs(cb.pBuffs);
+  const stun=cb.pBuffs.find(b=>b.id==="stun");
+  if(stun){
+    cb.pBuffs=cb.pBuffs.filter(b=>b.id!=="stun");
+    log("你处于眩晕中，无法行动！","bad");
+    renderAll();
+    setTimeout(enemyPhase,650);return;
+  }
+  cb.busy=false;renderAll();saveRun();
+}
+function decayBuffs(list){
+  for(let i=list.length-1;i>=0;i--){
+    const b=list[i];
+    if(b.id==="shield")continue;
+    if(b.turns>=90)continue;
+    b.turns--;
+    if(b.turns<=0)list.splice(i,1);
+  }
+  for(let i=list.length-1;i>=0;i--)if(list[i].stacks<=0&&list[i].id!=="shield")list.splice(i,1);
+}
+function tickDots(list,who){
+  if(who==="player"){
+    if(hasRelic("serpent")||hasRelic("torch")){
+      for(let i=list.length-1;i>=0;i--){const b=list[i];
+        if((b.id==="bleed"||b.id==="poison")&&hasRelic("serpent"))list.splice(i,1);
+        else if(b.id==="burn"&&hasRelic("torch"))list.splice(i,1);}
+    }
+  }
+  let total=0;
+  for(const b of list){
+    if(b.id==="bleed")total+=b.stacks;
+    else if(b.id==="poison")total+=b.stacks*2;
+    else if(b.id==="burn")total+=b.stacks;
+  }
+  if(total>0){
+    for(const b of list)if(["bleed","poison","burn"].includes(b.id))b.stacks--;
+    for(let i=list.length-1;i>=0;i--)if(list[i].stacks<=0&&["bleed","poison","burn"].includes(list[i].id))list.splice(i,1);
+    if(who==="player"){
+      run.hp-=total;
+      log(`你受到 ${total} 点持续伤害。`,"bad");
+      if(run.hp<=0){run.hp=0;return true;}
+    }else{
+      const e=cb.e;e.hp-=total;
+      log(`${e.name} 受到 ${total} 点持续伤害。`,"good");
+      if(e.hp<=0){e.hp=0;return true;}
+    }
+  }
+  return false;
+}
+function enemyAct(){
+  const e=cb.e,mv=cb.intent;
+  if(mv.kind==="atk"){
+    log(`${e.name} 使用【${mv.n}】！`,"combat");
+    const hits=mv.hits||1;
+    for(let i=0;i<hits;i++){if(enemyHit(mv))return true;if(!cb||cb.over)return true;}
+  }else if(mv.kind==="block"){
+    addBuff(e.buffs,"shield",mv.block,2);log(`${e.name} 使用【${mv.n}】，获得护盾。`,"combat");
+  }else if(mv.kind==="buff"){
+    log(`${e.name} 使用【${mv.n}】！`,"combat");
+    if(mv.self){
+      if(mv.self.str)addBuff(e.buffs,"str",mv.self.str,mv.self.turns||99);
+      if(mv.self.dodgeup)addBuff(e.buffs,"dodgeup",mv.self.dodgeup,mv.self.turns);
+      if(mv.self.regen)addBuff(e.buffs,"regen",mv.self.regen,mv.self.turns);
+    }
+    if(mv.healPct){const h=Math.round(e.maxhp*mv.healPct);e.hp=Math.min(e.maxhp,e.hp+h);log(`${e.name} 回复 ${h} 点生命。`,"bad");}
+  }else if(mv.kind==="debuff"){
+    log(`${e.name} 使用【${mv.n}】！`,"combat");
+    if(mv.foe){
+      if(mv.foe.weak){addBuff(cb.pBuffs,"weak",mv.foe.weak,mv.foe.weak);log("你感到浑身无力(虚弱)。","bad");}
+      if(mv.alsoPoison&&!hasRelic("serpent")){addBuff(cb.pBuffs,"poison",mv.alsoPoison,3);log("你中毒了！","bad");}
+      if(mv.foe.slow){addBuff(cb.pBuffs,"slow",1,mv.foe.slow);}
+    }
+  }
+  return false;
+}
+function enemyHit(mv){
+  const e=cb.e;
+  if(Math.random()*100<getDodge()){log(`你闪开了 ${e.name} 的攻击！`,"good");return false;}
+  let dmg=(e.atk+eStr())*(mv.mult||1)*R(0.9,1.1);
+  if(Math.random()*100<(e.crit||0))dmg*=1.5;
+  if(buffVal(e.buffs,"weak"))dmg*=0.75;
+  if(hasRelic("abysspact"))dmg*=1.15;
+  dmg*=100/(100+getDef());
+  dmg=Math.max(1,Math.round(dmg));
+  let rem=dmg;
+  const sh=cb.pBuffs.find(b=>b.id==="shield");
+  if(sh&&sh.stacks>0){
+    const ab=Math.min(sh.stacks,rem);sh.stacks-=ab;rem-=ab;
+    if(sh.stacks<=0)cb.pBuffs=cb.pBuffs.filter(b=>b.stacks>0);
+    log(`护盾抵消 ${ab} 点伤害。`,"cy");
+  }
+  if(rem>0){
+    if(hasRelic("jade")&&!cb.reviveUsed&&run.hp-rem<=0){
+      cb.reviveUsed=true;run.hp=Math.round(maxHp()*0.3);
+      log(`<b class="pu">血玉坠饰碎裂！你以30%生命从死亡边缘被拉回！</b>`,"loot");
+    }else{
+      run.hp-=rem;
+      log(`${e.name} 命中你，造成 <b class="rd">${rem}</b> 伤害。`,"bad");
+    }
+  }
+  if(hasRelic("thorn")&&rem>0){
+    e.hp-=4;log("荆棘护符反弹 4 点伤害。","good");
+    if(e.hp<=0){e.hp=0;onVictory();return true;}
+  }
+  if(mv.leech&&rem>0){const h=Math.round(rem*mv.leech);e.hp=Math.min(e.maxhp,e.hp+h);log(`${e.name} 回复 ${h} 点生命。`,"bad");}
+  if(mv.foe){
+    if(mv.foe.poison&&!hasRelic("serpent")){addBuff(cb.pBuffs,"poison",mv.foe.poison,3);log("你中毒了！","bad");}
+    if(mv.foe.bleed&&!hasRelic("serpent")){addBuff(cb.pBuffs,"bleed",mv.foe.bleed,3);log("你在流血！","bad");}
+    if(mv.foe.burn&&!hasRelic("torch")){addBuff(cb.pBuffs,"burn",mv.foe.burn,3);log("你被点燃了！","bad");}
+    if(mv.foe.armorbreak){addBuff(cb.pBuffs,"armorbreak",mv.foe.armorbreak,mv.foe.armorbreak);log("你的护甲被破坏！","bad");}
+    if(mv.foe.stun){addBuff(cb.pBuffs,"stun",1,1);log("你被震晕了！","bad");}
+  }
+  if(run.hp<=0){run.hp=0;onDeath();return true;}
+  return false;
+}
+function tryFlee(){
+  if(!cb||cb.over||cb.busy)return;
+  if(Math.random()<0.55+getDodge()/200){
+    log("你成功脱离了战斗。","sys");
+    run.gold=Math.max(0,run.gold-RI(5,15));
+    cb=null;run.phase="node";run.nodeOpts=null;saveRun();renderAll();
+  }else{
+    log("逃跑失败！","bad");
+    cb.busy=true;renderAll();
+    setTimeout(()=>{if(cb&&!cb.over)enemyPhase();},420);
+  }
+}
+
+/* --- 药水 --- */
+function openPotionModal(mapMode){
+  if(!run||!run.potions.length){log("没有可用的药水。","sys");return;}
+  $("#modal").classList.add("on");
+  let h=`<h2>药水袋</h2>`;
+  run.potions.forEach((p,i)=>{const d=POTIONS[p];
+    const dis=mapMode&&!["heal","mana"].includes(p);
+    h+=`<div class="kv"><span>🧪 ${d.n} <span style="font-size:12px;color:var(--dim)">${d.d}</span></span>
+      <button class="btn" ${dis?"disabled title='战斗外只能使用治疗/法力药水'":""} onclick="usePotion(${i})">使用</button></div>`;});
+  h+=`<div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeModal()">关闭</button></div>`;
+  $("#mbox").innerHTML=h;
+}
+function usePotion(i){
+  const p=run.potions[i];if(!p)return;
+  const inCombat=!!cb&&!cb.over;
+  const apply=()=>{
+    run.potions.splice(i,1);run.potionsUsed++;checkAch();
+    if(p==="heal"){const h=Math.round(maxHp()*0.45);run.hp=Math.min(maxHp(),run.hp+h);log(`喝下治疗药水，回复 ${h} 点生命。`,"good");}
+    if(p==="mana"){run.mp=Math.min(maxMp(),run.mp+30);log("喝下法力药水，回复 30 点法力。","good");}
+    if(p==="str"){addBuff(cb.pBuffs,"str",3,3);log("力量+3！","good");}
+    if(p==="iron"){addBuff(cb.pBuffs,"shield",Math.round(getDef()+8),3);log("获得了坚固护盾。","good");}
+    if(p==="venom"){addBuff(cb.e.buffs,"poison",6,3);log(`${cb.e.name} 中毒加深！`,"good");}
+    if(p==="bomb"){const dm=45+run.floor*3;cb.e.hp-=dm;log(`炸弹爆炸，造成 ${dm} 点伤害！`,"good");if(cb.e.hp<=0){cb.e.hp=0;onVictory();return true;}}
+    if(p==="swift"){addBuff(cb.pBuffs,"dodgeup",30,3);log("身形变得飘忽！","good");}
+    if(p==="rage"){addBuff(cb.pBuffs,"str",5,3);log("狂暴之力涌动！","good");}
+    return false;
+  };
+  if(inCombat){
+    if(cb.busy)return;
+    cb.busy=true;closeModal();
+    const ended=apply();
+    renderAll();
+    if(!ended&&!cb.over)setTimeout(enemyPhase,420);
+  }else{
+    if(!["heal","mana"].includes(p)){log("这种药水只能在战斗中使用。","sys");return;}
+    apply();closeModal();saveRun();renderAll();
+  }
+}
+
+/* --- 战斗结算 --- */
+function onVictory(){
+  if(!cb||cb.over)return;cb.over=true;
+  const e=cb.e;
+  log(`✔ <b>${e.name}</b> 被击倒了！`,"good");
+  run.kills++;meta.totalKills++;
+  if(e.kind==="boss")run.bossKills++;
+  if(hasRelic("soulgem"))run.mp=Math.min(maxMp(),run.mp+12);
+  let gold=e.gold+(hasRelic("goldskull")?15:0);
+  gainGold(gold);
+  gainXp(e.xp);
+  if(run.hp<maxHp()){
+    const vh=Math.round(maxHp()*0.12);
+    run.hp=Math.min(maxHp(),run.hp+vh);
+    log(`短暂的喘息回复了 ${vh} 点生命。`,"good");
+  }
+  if(hasRelic("scholar")){const h=Math.round(maxHp()*0.08);run.hp=Math.min(maxHp(),run.hp+h);log(`学者笔记：回复 ${h} 点生命。`,"good");}
+  const isBoss=e.kind==="boss",isElite=e.kind==="elite";
+  if(isBoss){
+    run.hp=Math.min(maxHp(),run.hp+Math.round(maxHp()*0.5));
+    log("BOSS的余晖治愈了你(回复50%生命)。","good");
+    if(run.floor===5&&!meta.bosses.includes(5))meta.bosses.push(5);
+    if((run.floor===10||e.id==="abyss_serpent")&&run.floor<=20){
+      if(!meta.bosses.includes(10))meta.bosses.push(10);
+      if(!meta.unlocks.mage){meta.unlocks.mage=true;log("🔓 职业解锁：法师！","loot");}
+    }
+    saveMeta();
+    const r=randRelic(run.floor>=10?1:0);
+    if(r)gainRelic(r);
+  }
+  if(isElite&&Math.random()<0.25){const r=randRelic(0);if(r)gainRelic(r);}
+  if(run.eventReward){run.eventReward=null;const r=randRelic(1);if(r)gainRelic(r);}
+  const dropCh=hasRelic("magnet")?0.55:0.30;
+  if(Math.random()<dropCh)gainItem(genItem(run.floor));
+  if(Math.random()<0.25||(hasRelic("glove")&&Math.random()<0.4)){
+    gainPotion(CH(["heal","heal","mana","str","iron","venom","swift"]));
+  }
+  checkAch();
+  cb=null;
+  run.phase="loot";saveRun();
+  renderAll();
+}
+function showContinue(){
+  if(run.pending>0){showLevelUp();return;}
+  $("#stage").innerHTML=`<button class="btn big cy" onclick="afterLoot()">▸ 继续深入下一层</button>`;
+}
+function afterLoot(){
+  if(run.pending>0){showLevelUp();return;}
+  if(run.floor===20&&!run.endless){victoryScreen();return;}
+  nextFloor();
+}
+function onDeath(){
+  if(!cb)return;cb.over=true;
+  log(`<b class="rd">你的视野逐渐模糊……深渊吞噬了你。</b>`,"bad");
+  const souls=calcSouls();
+  meta.souls+=souls;saveMeta();clearSave();
+  cb=null;run.phase="over";
+  renderAll();
+  $("#stage").innerHTML=`<div style="padding:20px;text-align:center">
+    <div class="rd" style="font-size:22px;margin-bottom:10px">═══ 冒险终结 ═══</div>
+    <div>到达：<span class="yl">第 ${run.floor} 层</span> · 击杀：<span class="yl">${run.kills}</span> · 等级：<span class="yl">Lv.${run.level}</span></div>
+    <div style="margin:10px 0">获得 <span class="pu">魂晶 +${souls}</span>（遗产终端可消费）</div>
+    <button class="btn big cy" onclick="finishToMenu()">▸ 返回主菜单</button></div>`;
+}
+function calcSouls(){
+  let s=run.floor*6+run.kills*2+(run.bossKills||0)*15;
+  if(run.floor>=20&&!run.endless)s+=150;
+  s=Math.round(s*(1+0.1*(run.asc||0))*(1+0.15*perkLv("soul")));
+  return Math.max(5,s);
+}
+function finishToMenu(){run=null;cb=null;screen="menu";renderAll();}
+function victoryScreen(){
+  run.phase="over";
+  meta.wins++;
+  if(!meta.unlocks.mage){meta.unlocks.mage=true;}
+  const souls=calcSouls();meta.souls+=souls;
+  saveMeta();clearSave();checkAch();
+  $("#stage").innerHTML=`<div style="padding:24px;text-align:center">
+    <div class="or" style="font-size:24px;margin-bottom:10px">═══ 深 洲 之 主 已 死 ═══</div>
+    <div class="gr">你站在深渊之主的残骸上。下方，一条更深的裂隙缓缓张开——那里是【无尽回廊】。</div>
+    <div style="margin:12px 0">通关！击杀 ${run.kills} · 等级 Lv.${run.level} · 金币 ${run.gold} · <span class="pu">魂晶 +${souls}</span></div>
+    <button class="btn big pu" onclick="goEndless()">▸ 踏入无尽回廊</button>
+    <button class="btn big" onclick="finishToMenu()">▸ 满载而归 (返回主菜单)</button></div>`;
+}
+function goEndless(){
+  run.endless=true;run.phase="node";run.nodeOpts=null;saveRun();
+  say("你跃入裂隙。这里没有地图，没有尽头，只有越来越浓的黑暗……","boss");
+  nextFloor();
+}
+
+/* ============================================================
+   成长
+   ============================================================ */
+function gainGold(n){
+  if(hasRelic("coin"))n=Math.round(n*1.4);
+  run.gold+=n;log(`获得 <span class="yl">${n} 金币</span>。`,"loot");
+  checkAch();
+}
+function gainXp(n){
+  if(hasRelic("crystal"))n=Math.round(n*1.25);
+  n=Math.round(n*(1+0.1*perkLv("xp")));
+  run.xp+=n;log(`获得 <span class="cy">${n} 经验</span>。`,"loot");
+  while(run.xp>=xpNeed()){run.xp-=xpNeed();run.level++;run.pending++;
+    log(`<b class="or">等级提升！Lv.${run.level}</b>`,"good");}
+  checkAch();
+}
+function levelUpOptions(){
+  const c=CLASSES[run.cls];
+  const unlearned=c.pool.filter(id=>!run.skills.some(s=>s.id===id));
+  const upgradable=run.skills.filter(s=>s.lv<3);
+  const opts=[];
+  if(unlearned.length&&Math.random()<0.65)opts.push({t:"skill",id:CH(unlearned)});
+  if(upgradable.length&&Math.random()<0.5)opts.push({t:"up",id:CH(upgradable).id});
+  if(!opts.length){
+    if(unlearned.length)opts.push({t:"skill",id:CH(unlearned)});
+    else if(upgradable.length)opts.push({t:"up",id:CH(upgradable).id});
+  }
+  const stats=["maxhp","atk","def","crit","dodge","maxmp"];
+  while(opts.length<3){const k=CH(stats);if(!opts.some(o=>o.t==="stat"&&o.k===k))opts.push({t:"stat",k});}
+  return opts.slice(0,3);
+}
+function showLevelUp(){
+  if(!levelUpCache)levelUpCache=levelUpOptions();
+  const opts=levelUpCache;
+  $("#modal").classList.add("on");
+  let h=`<h2>⬆ 等级提升 Lv.${run.level} — 三选一</h2><div>`;
+  opts.forEach((o,i)=>{
+    let t="",sub="";
+    if(o.t==="skill"){const d=SK[o.id];t=`学习技能：${d.n}`;sub=d.d;}
+    if(o.t==="up"){const d=SK[o.id];t=`强化技能：${d.n} → Lv${run.skills.find(s=>s.id===o.id).lv+1}`;sub=d.d;}
+    if(o.t==="stat"){t={maxhp:"最大生命+10%(并回复)",atk:"攻击+4",def:"防御+3",crit:"暴击率+6%",dodge:"闪避率+4%",maxmp:"最大法力+8"}[o.k];sub="永久属性提升";}
+    h+=`<div class="card" style="width:170px" onclick="pickLevelUp(${i})"><h4>${t}</h4><div class="dim" style="font-size:12px">${esc(sub)}</div></div>`;
+  });
+  h+=`</div>`;
+  $("#mbox").innerHTML=h;
+}
+function pickLevelUp(i){
+  const opts=levelUpCache;if(!opts||!opts[i])return;
+  const o=opts[i];
+  if(o.t==="skill"){
+    run.skills.push({id:o.id,lv:1});
+    if(run.loadout.length<LOADOUT_MAX)run.loadout.push(o.id);
+    log(`习得新技能【${SK[o.id].n}】！${run.loadout.length<LOADOUT_MAX?"":"(技能栏已满，请在右侧手动配置)"}`,"good");
+  }
+  if(o.t==="up"){const s=run.skills.find(x=>x.id===o.id);s.lv++;log(`【${SK[o.id].n}】强化至 Lv${s.lv}！`,"good");}
+  if(o.t==="stat"){
+    if(o.k==="maxhp"){const add=Math.round(maxHp()*0.1);run.maxhp+=add;run.hp+=add;log(`最大生命+${add}。`,"good");}
+    if(o.k==="atk"){run.atk+=4;log("攻击+4。","good");}
+    if(o.k==="def"){run.def+=3;log("防御+3。","good");}
+    if(o.k==="crit"){run.crit+=6;log("暴击率+6%。","good");}
+    if(o.k==="dodge"){run.dodge+=4;log("闪避率+4%。","good");}
+    if(o.k==="maxmp"){run.maxmp+=8;run.mp+=8;log("最大法力+8。","good");}
+  }
+  run.pending--;saveRun();
+  if(run.pending>0){levelUpCache=levelUpOptions();showLevelUp();return;}
+  levelUpCache=null;closeModal();renderAll();
+}
+
+/* ============================================================
+   装备/物品
+   ============================================================ */
+function rollRarity(floor){
+  const r=Math.random()*100;
+  const leg=Math.min(6,1+floor*0.25),epic=8+floor*0.5,rare=25+floor*0.8;
+  if(r<leg)return"legendary";if(r<leg+epic)return"epic";if(r<leg+epic+rare)return"rare";return"common";
+}
+function genItem(floor,minRar=0){
+  const rank={common:0,rare:1,epic:2,legendary:3};
+  let rar=rollRarity(floor),tries=0;
+  while(rank[rar]<minRar&&tries++<25)rar=rollRarity(floor);
+  const slot=CH(["weapon","armor","trinket"]);
+  const base=CH(ITEM_BASES[slot]);
+  const finalRar=base.rar||rar;
+  const subN=finalRar==="legendary"?RI(2,3):finalRar==="epic"?2:finalRar==="rare"?RI(1,2):RI(0,1);
+  const sub=[];
+  const fScale=1+floor*0.06;
+  for(let i=0;i<subN;i++){
+    const k=CH(SUB_KEYS);
+    let v;
+    if(k==="hp")v=Math.round(RI(5,10)*fScale);
+    else if(k==="mp")v=RI(4,9);
+    else if(k==="atk"||k==="def")v=RI(1,2)+(floor>=10?1:0);
+    else v=RI(2,5);
+    sub.push({k,v});
+  }
+  const probe={base:base.id,slot,sub};
+  const stats=itemStat(probe,"atk")+itemStat(probe,"def")*1.5+itemStat(probe,"hp")*0.3+itemStat(probe,"crit")*0.8+itemStat(probe,"dodge")*0.8+itemStat(probe,"mp")*0.4;
+  const price=Math.max(40,Math.round(stats*9*RARITY[finalRar].mul*(1+floor*0.03)));
+  return {uid:uidSeq++,base:base.id,slot,name:base.n,rar:finalRar,sub,price};
+}
+function gainItem(it,silent){
+  if(run.bag.length>=8){log(`背包已满，${it.name} 被留下了。`,"bad");return;}
+  run.bag.push(it);
+  if(!silent)log(`拾取装备：${itemLine(it)}`,"loot");
+}
+function gainRelic(id,silent){
+  if(!id)return;
+  if(run.relics.includes(id)){run.gold+=40;log("发现重复遗物，转化为40金币。","loot");return;}
+  run.relics.push(id);
+  const d=RELICS[id],rr=RARITY[d.r];
+  if(!silent)log(`获得遗物：<span class="${rr.c}">◆ ${d.n}</span> — <span class="dim">${d.d}</span>`,"loot");
+  checkAch();
+}
+function gainPotion(id){
+  if(run.potions.length>=potCap()){log("药水袋已满。","bad");return;}
+  run.potions.push(id);log(`获得药水：🧪 ${POTIONS[id].n}`,"loot");
+}
+function randRelic(minR=0){
+  const pool=Object.keys(RELICS).filter(id=>RARK[RELICS[id].r]>=minR&&!run.relics.includes(id));
+  if(!pool.length)return null;
+  return CH(pool);
+}
+function equipBag(i){
+  const it=run.bag[i];if(!it)return;
+  run.bag.splice(i,1);
+  const old=run.equip[it.slot];
+  run.equip[it.slot]=it;
+  if(old)run.bag.push(old);
+  run.hp=Math.min(run.hp,maxHp());
+  log(`装备了 ${itemLine(it)}`,"loot");saveRun();renderAll();
+}
+function unequip(slot){
+  const it=run.equip[slot];if(!it)return;
+  if(run.bag.length>=8){log("背包已满，无法卸下。","bad");return;}
+  run.equip[slot]=null;run.bag.push(it);
+  run.hp=Math.min(run.hp,maxHp());saveRun();renderAll();
+}
+function sellBag(i){
+  const it=run.bag[i];if(!it)return;
+  const g=Math.floor(it.price*0.5);
+  run.bag.splice(i,1);run.gold+=g;
+  log(`卖出 ${it.name}，获得 ${g} 金币。`,"loot");saveRun();renderAll();
+}
+function toggleSkill(id){
+  if(run.loadout.includes(id)){run.loadout=run.loadout.filter(x=>x!==id);}
+  else{if(run.loadout.length>=LOADOUT_MAX){log(`最多装备 ${LOADOUT_MAX} 个技能。`,"bad");return;}run.loadout.push(id);}
+  saveRun();renderAll();
+}
+
+/* ============================================================
+   事件
+   ============================================================ */
+const EVENTS=[
+ {id:"altar",t:"神秘祭坛",txt:"甬道尽头立着一座黑色祭坛，石碑上的古老纹路随你的心跳明灭。低沉的声音在你脑中响起：『献祭，即馈赠。』",ch:[
+   {l:"献祭20%生命",f:()=>{const c=Math.round(maxHp()*0.2);run.hp=Math.max(1,run.hp-c);const r=randRelic(0);gainRelic(r);return [["献出生命，祭坛吐出一枚遗物作为回礼。","event"]];}},
+   {l:"献上60金币",req:()=>run.gold>=60,f:()=>{run.gold-=60;if(Math.random()<0.6){gainRelic(randRelic(1));return [["祭坛接受了金币，回馈以更珍贵之物。","event"]];}return [["金币滚入黑暗，没有任何回应。……被坑了。","bad"]];}},
+   {l:"默然离开",f:()=>[["你绕开祭坛。低语声渐渐远去。","sys"]]}]},
+ {id:"traveler",t:"受伤的旅者",txt:"一名旅行者倒在血泊中，胸口插着断箭。他艰难地抬手，向你露出一个虚弱的微笑。",ch:[
+   {l:"用治疗药水救他",req:()=>run.potions.includes("heal"),f:()=>{run.potions.splice(run.potions.indexOf("heal"),1);run.potionsUsed++;const it=genItem(run.floor,1);gainItem(it);return [["你倒出最后半瓶治疗药水。他挣扎着从行囊中翻出一件装备答谢。","event"]];}},
+   {l:"分他50金币",req:()=>run.gold>=50,f:()=>{run.gold-=50;const x=30+run.floor*4;run.xp+=x;log(`获得 ${x} 经验。`,"loot");return [["他说：『善良终有回响。』你忽然对战斗的诀窍有了新的领悟。","event"]];}},
+   {l:"搜刮他的行囊",f:()=>{if(Math.random()<0.5){const g=RI(60,140);run.gold+=g;return [[`你在他的行囊里翻出 ${g} 金币。愿深渊原谅你。`,"bad"]];}run.pendingBattle="battle";return [["他的同伴从阴影中现身，伏击你！","bad"]];}}]},
+ {id:"chest",t:"古旧的宝箱",txt:"角落里放着一只镶铜角的橡木宝箱，锁扣早已锈死。箱子表面刻着：『取之者，偿之。』",ch:[
+   {l:"直接打开",f:()=>{if(Math.random()<0.8){const it=genItem(run.floor,1);gainItem(it);const g=RI(30,70);run.gold+=g;return [[`宝箱中是装备与 ${g} 金币。`,"loot"]];}const c=Math.round(maxHp()*0.12);run.hp=Math.max(1,run.hp-c);run.gold+=20;return [[`毒针从锁孔弹出！你受到 ${c} 点伤害，但箱底还有20金币。`,"bad"]];}},
+   {l:"谨慎检查",f:()=>{if(run.cls==="rogue"||Math.random()<0.5){const r=randRelic(0);gainRelic(r);return [["你小心拆除了机关，箱中的遗物完好无损。","loot"]];}return [["检查半天一无所获——也许箱子只是个普通箱子。","sys"]];}},
+   {l:"离开",f:()=>[["总感觉哪里不对。你选择不冒这个险。","sys"]]}]},
+ {id:"goblin_merch",t:"地精黑市",txt:"一只独眼地精掀开斗篷，露出满身缝着的小袋子：『嘿，客官！血换钱，钱换命，童叟无欺！』",ch:[
+   {l:"用15%最大生命换120金币",f:()=>{const c=Math.round(maxHp()*0.15);run.hp=Math.max(1,run.hp-c);run.gold+=120;return [["地精熟练地放血装瓶，递给你120枚金币。","event"]];}},
+   {l:"花80金币买2瓶药水",req:()=>run.gold>=80,f:()=>{run.gold-=80;gainPotion(CH(["heal","mana","str"]));gainPotion(CH(["heal","iron","swift"]));return [["地精塞给你两瓶不明液体。希望别是尿。","event"]];}},
+   {l:"离开",f:()=>[["地精冲你龇牙咧嘴：『没眼光！』","sys"]]}]},
+ {id:"fountain",t:"幽蓝泉水",txt:"石缝间涌出一汪散发幽蓝光芒的泉水，水面倒映出的似乎不是你的脸。",ch:[
+   {l:"畅饮",f:()=>{if(Math.random()<0.6){run.hp=maxHp();return [["冰凉的力量流遍全身——生命完全恢复！","good"]];}const c=Math.round(maxHp()*0.15);run.hp=Math.max(1,run.hp-c);run.hp=Math.min(maxHp(),run.hp+Math.round(maxHp()*0.5));return [["泉水刺激如刀割，但确有疗效。净回复了一些生命。","event"]];}},
+   {l:"装瓶带走",f:()=>{gainPotion("heal");return [["你装了一瓶泉水带走。","loot"]];}},
+   {l:"洗把脸",f:()=>{const h=Math.round(maxHp()*0.2);run.hp=Math.min(maxHp(),run.hp+h);return [[`精神一振，回复 ${h} 点生命。`,"good"]];}}]},
+ {id:"library",t:"遗忘图书馆",txt:"爆炸式坍塌的书架间散落着发霉的典籍。有一本还在微微发光。",ch:[
+   {l:"埋头研读",f:()=>{const x=25+run.floor*4;run.xp+=x;log(`获得 ${x} 经验。`,"loot");return [["你花时间研读了古人的战斗笔记，获益匪浅。","event"]];}},
+   {l:"翻找书架",f:()=>{if(Math.random()<0.2){run.pendingBattle="battle";return [["书架后突然窜出什么东西——遭遇战！","bad"]];}const g=RI(40,90);run.gold+=g;return [[`在一本《论圣光与熬夜》的夹层里翻出 ${g} 金币。`,"loot"]];}},
+   {l:"撕毁禁书吸收力量",f:()=>{run.atk+=3;run.maxhp=Math.max(30,run.maxhp-8);run.hp=Math.min(run.hp,maxHp());return [["禁忌知识灼烧你的经脉——攻击+3，但最大生命-8。","event"]];}}]},
+ {id:"vampire",t:"深渊贵族",txt:"一位衣着华贵的苍白绅士以手抚胸，向你优雅行礼：『我已有三日未进食。能否……赏一口血？必有重谢。』",ch:[
+   {l:"献出血液(-25%生命)",f:()=>{const c=Math.round(maxHp()*0.25);run.hp=Math.max(1,run.hp-c);run.atk+=3;return [["他满意地擦擦嘴角，将一股腥甜的力量灌入你体内：攻击+3。","event"]];}},
+   {l:"拒绝并拔剑",f:()=>{run.eventReward=true;run.pendingBattle="event_boss";return [["『无礼！』他的双瞳化为血色——战斗！胜者可得其珍藏。","boss"]];}},
+   {l:"恭敬离开",f:()=>[["他优雅地消失在阴影里。最好别再见到他。","sys"]]}]},
+ {id:"blacksmith",t:"亡魂铁匠",txt:"半透明的铁匠仍在铁砧前挥锤，火花穿过他的身体落在地上。他头也不抬：『武器拿来。死人都闲得慌。』",ch:[
+   {l:"请他锻造武器/护甲",req:()=>run.equip.weapon||run.equip.armor,f:()=>{const t=run.equip.weapon?"weapon":"armor";run.equip[t].sub.push({k:t==="weapon"?"atk":"def",v:3});return [["锤声在深夜格外清晰。你的装备得到了强化！","good"]];}},
+   {l:"请他附魔饰品",req:()=>run.equip.trinket,f:()=>{run.equip.trinket.sub.push({k:CH(["crit","dodge"]),v:4});return [["饰品上多了一道细如发丝的符文。","good"]];}},
+   {l:"离开",f:()=>[["锤声在你身后渐渐消失。","sys"]]}]},
+ {id:"gamble",t:"骷髅赌徒",txt:"一具穿着破烂礼服的骷髅摇着骰盅：『猜大小！赢了翻倍，输了嘛……嘿嘿。入场费50金。』",ch:[
+   {l:"押大",req:()=>run.gold>=50,f:()=>{run.gold-=50;if(Math.random()<0.5){run.gold+=110;meta.gamblesWon++;saveMeta();checkAch();return [["骰子静止——大！你赢得 110 金币。","good"]];}return [["骰子静止——小。50金币进了骷髅的破口袋。","bad"]];}},
+   {l:"押小",req:()=>run.gold>=50,f:()=>{run.gold-=50;if(Math.random()<0.5){run.gold+=110;meta.gamblesWon++;saveMeta();checkAch();return [["骰子静止——小！你赢得 110 金币。","good"]];}return [["骰子静止——大。骷髅发出咯咯的笑声。","bad"]];}},
+   {l:"拒绝",f:()=>[["『不赌不赌，走过走过。』","sys"]]}]},
+ {id:"mirror",t:"镜像回廊",txt:"整面墙都是镜子。其中一面镜子里，『另一个你』正缓缓拔剑，嘴角挂着你看不懂的笑。",ch:[
+   {l:"与镜中之我决战",f:()=>{run.eventReward=true;run.pendingBattle="mirror";return [["镜面碎裂，『你』走了出来。只有胜者才配称为自己！","boss"]];}},
+   {l:"打碎所有镜子",f:()=>{const c=Math.round(maxHp()*0.1);run.hp=Math.max(1,run.hp-c);const g=RI(80,140);run.gold+=g;return [[`玻璃碎片割伤了 ${c} 点生命，但镜框上的镶金值 ${g} 金币。`,"event"]];}},
+   {l:"快步离开",f:()=>[["镜中的『你』目送你离开。","sys"]]}]},
+ {id:"spiders",t:"蜘蛛巢穴",txt:"洞壁上密密麻麻挂着丝茧，其中几枚泛着金光——那是被蛛丝裹住的钱袋和货物。",ch:[
+   {l:"伸手掏取",f:()=>{const g=RI(80,160);run.gold+=g;if(Math.random()<0.65){run.pendingBattle="elite";return [[`摸出 ${g} 金币——但茧壳里还有别的东西在动！精英战！`,"bad"]];}return [[`摸出 ${g} 金币，手气不错，母蜘蛛没醒。`,"loot"]];}},
+   {l:"火把烧毁巢穴",f:()=>{const g=RI(20,50);run.gold+=g;return [[`火焰吞没巢穴，残骸里留下 ${g} 金币。至少很安全。`,"loot"]];}},
+   {l:"离开",f:()=>[["你贴着墙根悄悄绕了过去。","sys"]]}]},
+ {id:"rift",t:"深渊裂隙",txt:"地面裂开一道幽深的缝，隐约可见下方几层的光点。跳下去，能更快深入——如果落点合适的话。",ch:[
+   {l:"跃入裂隙",f:()=>{const c=Math.round(maxHp()*0.18);run.hp=Math.max(1,run.hp-c);run.floor+=1;return [[`坠落与疼痛。你省了两层路，付出 ${c} 点生命。`,"event"]];}},
+   {l:"绕行",f:()=>{const x=15;run.xp+=x;log(`获得 ${x} 经验。`,"loot");return [["稳扎稳打，你在绕路时观察地形有所领悟。","sys"]];}}]},
+ {id:"ghost",t:"幽灵孩童",txt:"一个小女孩的半透明身影蹲在角落抽泣：『我的娃娃……掉进深渊里了……呜……』",ch:[
+   {l:"陪她寻找",f:()=>{const x=30+run.floor*3;run.xp+=x;const h=Math.round(maxHp()*0.25);run.hp=Math.min(maxHp(),run.hp+h);log(`获得 ${x} 经验。`,"loot");if(Math.random()<0.4)gainRelic(randRelic(0));return [[`你在裂缝深处找到了娃娃。她破涕为笑，一股暖流回复了 ${h} 点生命。`,"good"]];}},
+   {l:"无视离开",f:()=>[["哭声在你背后持续了很久，很久。","sys"]]}]},
+ {id:"seer",t:"盲眼占卜师",txt:"帐帘后坐着一位蒙眼老妇，面前的水晶球里翻涌着雾气：『30金币，我便告诉你命运的一角。』",ch:[
+   {l:"付费占卜",req:()=>run.gold>=30,f:()=>{run.gold-=30;const k=CH(["crit","dodge","hp"]);if(k==="crit"){run.crit+=5;return [["『你的箭矢将寻见缝隙。』暴击率+5%。","good"]];}if(k==="dodge"){run.dodge+=5;return [["『危险将与你擦肩。』闪避率+5%。","good"]];}run.maxhp+=12;return [["『你的命比想象中硬。』最大生命+12。","good"]];}},
+   {l:"偷取水晶球",f:()=>{if(Math.random()<0.5){gainRelic(randRelic(1));return [["老妇沉睡未醒。你抱起水晶球——里面滚出一枚遗物！","loot"]];}run.pendingBattle="battle";return [["『贼！』帐帘后窜出守卫——遭遇战！","bad"]];}},
+   {l:"离开",f:()=>[["雾气中似乎浮现出你倒下的模样。你选择不看。","sys"]]}]},
+ {id:"fire",t:"献祭之火",txt:"一簇永不熄灭的绿火在石盆中跳动。靠近它，能听见魂魄在火中细语。",ch:[
+   {l:"焚毁背包中最差的装备",req:()=>run.bag.length>0,f:()=>{let worst=0;run.bag.forEach((it,i)=>{if(it.price<run.bag[worst].price)worst=i;});const nm=run.bag[worst].name;run.bag.splice(worst,1);meta.souls+=25;saveMeta();return [[`${nm} 在绿火中化为灰烬。魂魄发出满足的叹息——魂晶+25。`,"event"]];}},
+   {l:"用火焰烘烤伤口",f:()=>{const h=Math.round(maxHp()*0.3);run.hp=Math.min(maxHp(),run.hp+h);return [[`灼烧带来剧痛，随后是奇异的痊愈。回复 ${h} 点生命。`,"good"]];}},
+   {l:"离开",f:()=>[["绿火在你身后轻轻摇曳。","sys"]]}]},
+ {id:"whisper",t:"深渊低语",txt:"『接 受 我。』一个声音直接在你颅内炸开。你的影子似乎扭动了一下，朝你伸出了手。",ch:[
+   {l:"接受馈赠",f:()=>{const k=CH(["atk","crit","dodge","hp"]);if(k==="atk")run.atk+=3;if(k==="crit")run.crit+=6;if(k==="dodge")run.dodge+=6;if(k==="hp")run.maxhp+=18;let s=`力量涌入：${{atk:"攻击+3",crit:"暴击+6%",dodge:"闪避+6%",hp:"生命+18"}[k]}。`;if(Math.random()<0.2){run.maxhp=Math.max(30,run.maxhp-10);s+=" 但你的影子笑了——最大生命-10。";}return [[s,"event"]];}},
+   {l:"堵住耳朵",f:()=>{const h=Math.round(maxHp()*0.1);run.hp=Math.min(maxHp(),run.hp+h);return [[`低语退去如潮水。你喘息着，回复了 ${h} 点生命。`,"good"]];}}]},
+ {id:"hourglass",t:"静止的沙漏",txt:"巨大的石室中央，一只青铜沙漏悬在半空。里面的沙粒凝固不动，仿佛时间在此处打了个结。",ch:[
+   {l:"触碰沙漏",f:()=>{run.mp=maxMp();const h=Math.round(maxHp()*0.15);run.hp=Math.min(maxHp(),run.hp+h);return [[`指尖触及的一瞬，时间重新流动。法力全满，回复 ${h} 点生命。`,"good"]];}},
+   {l:"砸碎沙漏",f:()=>{const it=genItem(run.floor,2);gainItem(it);return [["玻璃与时间一同碎裂。沙漏的核心凝成了一件装备。","loot"]];}}]},
+ {id:"swamp",t:"毒沼泽地",txt:"甬道被一片紫黑色的沼泽拦断，气泡破裂时散出甜腻的气味。对岸的石台上放着几样东西。",ch:[
+   {l:"徒步蹚过",f:()=>{if(!hasRelic("serpent"))run.hp=Math.max(1,run.hp-12);const p=CH(["heal","mana","venom"]);gainPotion(p);const g=RI(30,70);run.gold+=g;return [[`沼泽灼烧着你的双腿(-12生命)，但对岸有药水与 ${g} 金币。`,"event"]];}},
+   {l:"寻找别路",f:()=>[["多走了半小时弯路。安全，但也仅此而已。","sys"]]}]},
+];
+
+function startEvent(){
+  if(!run.eventPool.length){enterNode("battle");return;}
+  const id=run.eventPool.pop();
+  curEvent=EVENTS.find(e=>e.id===id);
+  run.phase="event";saveRun();
+  say(`【${curEvent.t}】`,"event");
+  say(curEvent.txt,"story");
+  renderAll();
+}
+function renderEventStage(st){
+  if(!curEvent){st.innerHTML="";return;}
+  let h=`<div class="dim">// ${curEvent.t}</div>`;
+  curEvent.ch.forEach((c,i)=>{
+    const ok=!c.req||c.req();
+    h+=`<button class="node-opt" ${ok?"":"disabled"} onclick="resolveEventChoice(${i})">
+      <span class="ic">▸</span>${c.l}${ok?"":" <small>(条件不足)</small>"}</button>`;
+  });
+  st.innerHTML=h;
+}
+function resolveEventChoice(i){
+  const c=curEvent.ch[i];
+  if(c.req&&!c.req())return;
+  const msgs=c.f()||[];
+  flushType();
+  for(const [m,tp] of msgs)say(m,tp);
+  if(run.pendingBattle){
+    const b=run.pendingBattle;run.pendingBattle=null;curEvent=null;
+    run.node=(b==="elite")?"elite":(b==="mirror"||b==="event_boss")?"boss":"battle";
+    run.phase="combat";saveRun();
+    const kind=b==="mirror"?"mirror":b==="event_boss"?"event_boss":b==="elite"?"elite":"battle";
+    setTimeout(()=>{startCombat(kind);},900);
+    renderAll();return;
+  }
+  run.phase="event_done";saveRun();
+  renderAll();
+}
+function renderEventDone(){
+  $("#stage").innerHTML=`<button class="btn big cy" onclick="afterEvent()">▸ 继续前进</button>`;
+}
+function afterEvent(){curEvent=null;nextFloor();}
+
+/* ============================================================
+   商店 / 休整 / 宝箱
+   ============================================================ */
+function priceMod(){return (1-0.1*perkLv("shop"))*(hasRelic("pact")?0.8:1);}
+function openShop(){
+  shop={items:[genItem(run.floor),genItem(run.floor),genItem(run.floor)],
+    potions:shuffle(Object.keys(POTIONS)).slice(0,3),
+    relic:Math.random()<0.6?randRelic(0):null,
+    healed:false};
+  say("帐帘一掀，一位裹着厚袍的商人冲你咧嘴一笑：『深渊里也有便利店！』","event");
+  renderAll();
+}
+function renderShop(){
+  const st=$("#stage");
+  if(!shop){st.innerHTML="";return;}
+  const mod=priceMod();
+  let h=`<div class="dim">// 流动商人 — 你的金币：<span class="yl">${run.gold} G</span></div>`;
+  shop.items.forEach((it,i)=>{
+    if(!it)return;
+    const p=Math.round(it.price*mod);
+    h+=`<div class="kv"><span>${itemLine(it)}</span>
+      <button class="btn" ${run.gold<p?"disabled":""} onclick="buyItem(${i})">${p} G</button></div>`;
+  });
+  shop.potions.forEach((p,i)=>{
+    if(!p)return;
+    const d=POTIONS[p];const pr=Math.round(d.price*mod);
+    h+=`<div class="kv"><span>🧪 ${d.n} <span class="dim">${d.d}</span></span>
+      <button class="btn" ${run.gold<pr?"disabled":""} onclick="buyPotion(${i})">${pr} G</button></div>`;
+  });
+  if(shop.relic){
+    const d=RELICS[shop.relic];const rr=RARITY[d.r];
+    const pr=Math.round((150+run.floor*6)*mod);
+    h+=`<div class="kv"><span><span class="${rr.c}">◆ ${d.n}</span> <span class="dim">${d.d}</span></span>
+      <button class="btn pu" ${run.gold<pr?"disabled":""} onclick="buyRelic()">${pr} G</button></div>`;
+  }
+  const healP=Math.round(60*mod);
+  h+=`<div class="kv"><span>🏨 治疗服务(回复40%生命)</span>
+    <button class="btn" ${shop.healed||run.gold<healP?"disabled":""} onclick="shopHeal()">${healP} G</button></div>
+    <div style="margin-top:8px">
+    <button class="btn" ${run.gold<Math.round((40+run.floor*2)*mod)?"disabled":""} onclick="rerollShop()">🔄 刷新货物 ${Math.round((40+run.floor*2)*mod)} G</button>
+    <button class="btn cy" onclick="leaveShop()">▸ 离开商店</button></div>`;
+  st.innerHTML=h;
+  saveRun();
+}
+function buyItem(i){const it=shop.items[i];if(!it)return;const p=Math.round(it.price*priceMod());if(run.gold<p)return;run.gold-=p;shop.items[i]=null;gainItem(it);renderAll();}
+function buyPotion(i){const p=shop.potions[i];if(!p)return;const pr=Math.round(POTIONS[p].price*priceMod());if(run.gold<pr)return;if(run.potions.length>=potCap()){log("药水袋已满。","bad");return;}run.gold-=pr;shop.potions[i]=null;gainPotion(p);renderAll();}
+function buyRelic(){if(!shop.relic)return;const pr=Math.round((150+run.floor*6)*priceMod());if(run.gold<pr)return;run.gold-=pr;const r=shop.relic;shop.relic=null;gainRelic(r);renderAll();}
+function shopHeal(){const pr=Math.round(60*priceMod());if(run.gold<pr||shop.healed)return;run.gold-=pr;shop.healed=true;const h=Math.round(maxHp()*0.4);run.hp=Math.min(maxHp(),run.hp+h);log(`商人替你包扎，回复 ${h} 点生命。`,"good");renderAll();}
+function rerollShop(){const pr=Math.round((40+run.floor*2)*priceMod());if(run.gold<pr)return;run.gold-=pr;shop.items=[genItem(run.floor),genItem(run.floor),genItem(run.floor)];shop.relic=Math.random()<0.6?randRelic(0):null;renderAll();}
+function leaveShop(){shop=null;nextFloor();}
+
+function openRest(){
+  restUsed=false;
+  say("你找到了一处背风的角落，火盆里还有余温。这里暂时安全。","event");
+  renderAll();
+}
+function renderRestStage(st){
+  if(restUsed){st.innerHTML=`<button class="btn big cy" onclick="afterRest()">▸ 拔营出发</button>`;return;}
+  st.innerHTML=`<div class="dim">// 安全营地 — 选择休整方式</div>
+  <button class="node-opt" onclick="restChoice('sleep')">
+    <span class="ic">💤</span><b>休息</b><br><small>回复45%最大生命。</small></button>
+  <button class="node-opt" onclick="restChoice('train')">
+    <span class="ic">💪</span><b>锻炼</b><br><small>攻击+4 / 防御+3 / 最大生命+10% / 随机技能强化+1（随机四选一）</small></button>`;
+}
+function restChoice(k){
+  if(restUsed)return;restUsed=true;
+  if(k==="sleep"){const h=Math.round(maxHp()*0.45);run.hp=Math.min(maxHp(),run.hp+h);say(`你在火堆旁沉沉睡去。醒来时回复了 ${h} 点生命。`,"good");}
+  else{
+    const opts=[];
+    if(run.skills.some(s=>s.lv<3))opts.push("up");
+    opts.push("atk","def","hp");
+    const pick=CH(opts);
+    if(pick==="up"){const s=CH(run.skills.filter(x=>x.lv<3));s.lv++;say(`你在梦中反复演练【${SK[s.id].n}】——强化至 Lv${s.lv}！`,"good");}
+    if(pick==="atk"){run.atk+=4;say("你对着石壁挥了三百次剑。攻击+4。","good");}
+    if(pick==="def"){run.def+=3;say("你反复格挡、受击、再格挡。防御+3。","good");}
+    if(pick==="hp"){const add=Math.round(maxHp()*0.1);run.maxhp+=add;run.hp+=add;say(`你把身体逼到极限又愈合。最大生命+${add}。`,"good");}
+  }
+  saveRun();renderAll();
+}
+function afterRest(){nextFloor();}
+
+function openTreasure(){
+  treasureOpened=false;
+  say("一只落满灰尘的宝箱安静地立在路中央。周围没有守卫，也没有陷阱的痕迹——这更可疑了。","event");
+  renderAll();
+}
+function renderTreasureStage(st){
+  if(treasureOpened){st.innerHTML=`<button class="btn big cy" onclick="afterTreasure()">▸ 继续前进</button>`;return;}
+  st.innerHTML=`<div class="dim">// 无人宝箱</div>
+  <button class="node-opt" onclick="openChest()"><span class="ic">🎁</span><b>打开宝箱</b></button>
+  <button class="node-opt" onclick="skipChest()"><span class="ic">🚶</span><b>算了，不碰</b></button>`;
+}
+function openChest(){
+  treasureOpened=true;
+  if(Math.random()<0.15){const c=Math.round(maxHp()*0.1);run.hp=Math.max(1,run.hp-c);log("宝箱弹出毒针！","bad");}
+  if(Math.random()<0.7)gainRelic(randRelic(run.floor>=10?1:0));
+  else gainItem(genItem(run.floor,1));
+  gainGold(RI(30,90)+run.floor*3);
+  saveRun();renderAll();
+}
+function skipChest(){treasureOpened=true;say("你按住躁动的好奇心走开了。深渊里，克制也是一种美德。","sys");renderAll();}
+function afterTreasure(){nextFloor();}
+
+/* ============================================================
+   热键
+   ============================================================ */
+document.addEventListener("keydown",e=>{
+  if($("#modal").classList.contains("on")){if(e.key==="Escape")closeModal();return;}
+  if(screen==="menu"){if(e.key==="Escape"&&run)backToGame();return;}
+  if(screen!=="game"||!run)return;
+  if(e.key==="Escape"){screen="menu";renderAll();return;}
+  if(run.phase!=="combat"||!cb||cb.over||cb.busy)return;
+  const k=e.key.toLowerCase();
+  if(k==="a")useBasic();
+  if(k==="q")openPotionModal();
+  if(/^[1-5]$/.test(k)){const id=run.loadout[+k-1];if(id)useSkill(id);}
+});
+
+/* ============================================================
+   启动
+   ============================================================ */
+window.addEventListener("load",()=>{screen="menu";renderAll();});
+</script>
+</body>
+</html>
